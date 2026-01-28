@@ -1,53 +1,64 @@
-const { jsPDF } = window.jspdf;
+const steps = document.querySelectorAll('.step');
+let cur = 0;
 
-function preview(input, img){
-  input.addEventListener("change", e=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const url = URL.createObjectURL(file);
-    img.src = url;
-  });
+const stepNo = document.getElementById('stepNo');
+const bar = document.getElementById('bar');
+
+function show() {
+  steps.forEach(s=>s.classList.remove('active'));
+  steps[cur].classList.add('active');
+  stepNo.textContent = cur + 1;
+  bar.style.width = ((cur+1)/8*100)+'%';
 }
 
-preview(licFront, licFrontPrev);
-preview(licBack, licBackPrev);
-
-makePdfBtn.addEventListener("click", async ()=>{
-
-  const pdf = new jsPDF({ unit:"mm", format:"a4" });
-
-  const page = document.createElement("div");
-  page.style.width = "210mm";
-  page.style.padding = "14mm";
-  page.style.background = "#fff";
-
-  page.innerHTML = `
-    <h2>OFA GROUP ドライバー登録シート</h2>
-    <p>作成日時：${new Date().toLocaleString("ja-JP")}</p>
-    <p>氏名：${name.value}</p>
-    <p>フリガナ：${kana.value}</p>
-    <p>電話番号：${phone.value}</p>
-    <p>メール：${email.value}</p>
-    <p>生年月日：${birth.value}</p>
-    <p>住所：${zip.value} ${pref.value}${city.value}${addr1.value}${addr2.value}</p>
-  `;
-
-  if(licFrontPrev.src){
-    const img = document.createElement("img");
-    img.src = licFrontPrev.src;
-    img.style.width = "100%";
-    img.style.height = "120mm";
-    img.style.objectFit = "cover";
-    page.appendChild(img);
+document.getElementById('next').onclick = () => {
+  if (cur === 6 && !document.getElementById('agree').checked) {
+    alert('同意が必要です');
+    return;
   }
+  if (cur < 7) { cur++; show(); }
+};
 
-  document.body.appendChild(page);
+document.getElementById('back').onclick = () => {
+  if (cur > 0) { cur--; show(); }
+};
 
-  const canvas = await html2canvas(page,{scale:2});
-  const imgData = canvas.toDataURL("image/jpeg",0.95);
-
-  pdf.addImage(imgData,"JPEG",0,0,210,297);
-  pdf.save(`OFA_ドライバー登録.pdf`);
-
-  document.body.removeChild(page);
+document.querySelectorAll('.seg button').forEach(b=>{
+  b.onclick = ()=> document.getElementById('aff').value = b.dataset.val;
 });
+
+document.getElementById('pdfBtn').onclick = async () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+
+  let y = 20;
+  const line = (t)=>{ pdf.text(t,20,y); y+=8; if(y>270){pdf.addPage();y=20;} };
+
+  line('OFA GROUP ドライバー登録シート');
+  line(`氏名：${name.value}`);
+  line(`電話：${phone.value}`);
+  line(`住所：${pref.value}${city.value}${addr1.value}${addr2.value}`);
+
+  const addImage = (file)=>{
+    return new Promise(r=>{
+      if(!file) return r();
+      const img = new Image();
+      img.onload = ()=>{
+        const w = 170;
+        const h = img.height * (w/img.width);
+        if (y+h>270){pdf.addPage();y=20;}
+        pdf.addImage(img,'JPEG',20,y,w,h,'','FAST');
+        y+=h+10;
+        r();
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  await addImage(licF.files[0]);
+  await addImage(licB.files[0]);
+
+  pdf.save('OFA_driver_entry.pdf');
+};
+
+show();
