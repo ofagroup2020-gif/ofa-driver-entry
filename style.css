@@ -1,110 +1,92 @@
-/* ===============================
-   OFA GROUP Driver Entry App
-   style.css（PDF最適化済み）
-=============================== */
-
 *{
   box-sizing:border-box;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 body{
   margin:0;
-  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI",
-  "Hiragino Kaku Gothic ProN","Hiragino Sans", Meiryo, sans-serif;
-  background:#f5f6f8;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  background:#f2f4f7;
   color:#222;
 }
 
-/* ===== PDF ===== */
-.pdfPage{
-  width:210mm;
-  min-height:297mm;
-  padding:14mm;
-  background:#fff;
-}
-
-.pdfHeader{
+.top{
   display:flex;
   justify-content:space-between;
-  align-items:flex-end;
-  border-bottom:3px solid #ff8a00;
-  padding-bottom:6px;
-  margin-bottom:10px;
+  align-items:center;
+  padding:14px;
+  background:linear-gradient(90deg,#ff8a00,#ff3d81,#7a4dff);
+  color:#fff;
 }
 
-.pdfTitle{
-  font-size:18px;
-  font-weight:700;
+.brand{
+  display:flex;
+  gap:10px;
+  align-items:center;
 }
 
-.pdfDate{
-  font-size:11px;
-  color:#666;
+.logo{
+  background:#fff;
+  color:#ff8a00;
+  font-weight:800;
+  border-radius:50%;
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.pdfGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px 10px;
-}
+.title{font-weight:700}
+.sub{font-size:12px;opacity:.9}
 
-.pdfBox{
-  border:1px solid #e5e5e5;
-  border-left:5px solid #ff8a00;
-  border-radius:8px;
-  padding:6px 8px;
+.step{
+  background:rgba(255,255,255,.2);
+  padding:6px 10px;
+  border-radius:999px;
   font-size:12px;
 }
 
-.pdfLabel{
-  font-size:10px;
-  color:#777;
-  margin-bottom:2px;
+.card{
+  background:#fff;
+  margin:14px;
+  padding:16px;
+  border-radius:16px;
 }
 
-.pdfValue{
-  font-weight:600;
-}
+h1{margin-top:0}
+h2{margin-top:20px}
 
-/* ===== Images ===== */
-.pdfImgWrap{
-  margin-top:10px;
-}
-
-.pdfImgTitle{
-  font-size:13px;
-  font-weight:700;
-  margin-bottom:6px;
-}
-
-.pdfImgGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.pdfImgBox{
-  border:1px solid #e5e5e5;
-  border-radius:10px;
-  overflow:hidden;
-  background:#fafafa;
-}
-
-/* 🔴 重要：写真を拡大して上下を自動トリミング */
-.pdfImgBox img{
-  width:100%;
-  height:360px;
-  object-fit:cover;          /* 写真サイズを保ちつつ拡大 */
-  object-position:center;    /* 中央基準で上下カット */
+label{
   display:block;
+  margin-bottom:10px;
+  font-size:14px;
 }
 
-/* ===== Footer ===== */
-.pdfFooter{
-  margin-top:10px;
-  font-size:11px;
-  text-align:center;
-  color:#555;
+input{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  margin-top:4px;
+  font-size:16px;
+}
+
+img{
+  width:100%;
+  max-height:260px;
+  object-fit:cover;
+  border-radius:10px;
+  margin:6px 0 12px;
+}
+
+.btn{
+  width:100%;
+  margin-top:16px;
+  padding:14px;
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(90deg,#ff8a00,#ff3d81,#7a4dff);
 }
