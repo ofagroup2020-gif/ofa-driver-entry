@@ -1,371 +1,397 @@
-/* =========================
-   CONFIG
-========================= */
-const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/8x437Vt";
+(() => {
+  const steps = Array.from(document.querySelectorAll(".step"));
+  let cur = 0;
 
-/* =========================
-   ELEMENTS
-========================= */
-const steps = Array.from(document.querySelectorAll(".step"));
-let cur = 0;
+  const stepNo = document.getElementById("stepNo");
+  const bar = document.getElementById("bar");
+  const dots = document.getElementById("dots");
+  const toast = document.getElementById("toast");
 
-const stepNo = document.getElementById("stepNo");
-const bar = document.getElementById("bar");
-const dots = document.getElementById("dots");
-const toast = document.getElementById("toast");
+  // inputs
+  const $ = (id) => document.getElementById(id);
 
-const $ = (id) => document.getElementById(id);
+  const name = $("name");
+  const kana = $("kana");
+  const phone = $("phone");
+  const email = $("email");
+  const birth = $("birth");
 
-/* inputs */
-const name = $("name");
-const kana = $("kana");
-const phone = $("phone");
-const email = $("email");
-const birth = $("birth");
+  const zip = $("zip");
+  const pref = $("pref");
+  const city = $("city");
+  const addr1 = $("addr1");
+  const addr2 = $("addr2");
 
-const zip = $("zip");
-const pref = $("pref");
-const city = $("city");
-const addr1 = $("addr1");
-const addr2 = $("addr2");
+  const aff = $("aff");
+  const affCompany = $("affCompany");
 
-const aff = $("aff");
-const company = $("company");
+  const carType = $("carType");
+  const carNo = $("carNo");
+  const blackNo = $("blackNo");
 
-const carType = $("carType");
-const carNo = $("carNo");
-const black = $("black");
+  const bank = $("bank");
+  const branch = $("branch"); // ← 入力は残してる（必要なら後で消してOK）
+  const accType = $("accType");
+  const accNo = $("accNo");
+  const accNameKana = $("accNameKana");
 
-const bank = $("bank");
-const branch = $("branch");
-const acctType = $("acctType");
-const acctNo = $("acctNo");
-const acctName = $("acctName");
+  const licF = $("licF");
+  const licB = $("licB");
+  const prevF = $("prevF");
+  const prevB = $("prevB");
 
-const licF = $("licF");
-const licB = $("licB");
-const prevF = $("prevF");
-const prevB = $("prevB");
+  const agree = $("agree");
 
-const agree = $("agree");
+  const pdfBtn = $("pdfBtn");
+  const restart = $("restart");
 
-/* done */
-const lineBtn = $("lineBtn");
-const pdfBtn = $("pdfBtn");
-const restartBtn = $("restartBtn");
-const finishBtn = $("finishBtn");
+  // PDF hidden nodes
+  const pdfPaper = $("pdfPaper");
+  const pdfGrid = $("pdfGrid");
+  const pdfDate = $("pdfDate");
+  const pdfImgF = $("pdfImgF");
+  const pdfImgB = $("pdfImgB");
 
-/* pdf paper */
-const pdfPaper = $("pdfPaper");
-const pdfGrid = $("pdfGrid");
-const pdfDate = $("pdfDate");
-const pdfImgF = $("pdfImgF");
-const pdfImgB = $("pdfImgB");
-
-/* =========================
-   INIT UI
-========================= */
-function buildDots(){
-  dots.innerHTML = "";
-  for(let i=0;i<8;i++){
-    const d = document.createElement("div");
-    d.className = "d" + (i===0 ? " on" : "");
-    dots.appendChild(d);
+  // -------- UI: dots ----------
+  function renderDots() {
+    dots.innerHTML = "";
+    for (let i = 0; i < 8; i++) {
+      const d = document.createElement("div");
+      d.className = "d" + (i === cur ? " on" : "");
+      dots.appendChild(d);
+    }
   }
-}
-buildDots();
 
-function showToast(msg){
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"), 1200);
-}
+  function show() {
+    steps.forEach((s) => s.classList.remove("active"));
+    steps[cur].classList.add("active");
 
-function show(){
-  steps.forEach(s => s.classList.remove("active"));
-  steps[cur].classList.add("active");
+    stepNo.textContent = String(cur + 1);
+    bar.style.width = ((cur + 1) / 8) * 100 + "%";
+    renderDots();
 
-  stepNo.textContent = String(cur + 1);
-  bar.style.width = ((cur+1)/8*100) + "%";
+    // topへスクロール
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
-  const ds = Array.from(dots.children);
-  ds.forEach((d,i)=> d.classList.toggle("on", i===cur));
-}
+  // -------- helpers ----------
+  function toastShow(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1600);
+  }
 
-/* =========================
-   VALIDATION
-========================= */
-function val(v){ return (v || "").toString().trim(); }
+  function cleanPhone(v) {
+    return (v || "").replace(/[^\d+]/g, "");
+  }
 
-function requireStep(stepIndex){
-  // stepIndex: 0-based
-  if(stepIndex === 0){
-    if(!val(name.value)) return "氏名を入力してください";
-    if(!val(kana.value)) return "フリガナを入力してください";
-    if(!val(phone.value)) return "電話番号を入力してください";
-    if(!val(email.value)) return "メールアドレスを入力してください";
-    if(!val(birth.value)) return "生年月日を入力してください";
+  function isEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || "");
   }
-  if(stepIndex === 1){
-    if(!val(zip.value)) return "郵便番号を入力してください";
-    if(!val(pref.value)) return "都道府県を入力してください";
-    if(!val(city.value)) return "市区町村を入力してください";
-    if(!val(addr1.value)) return "番地を入力してください";
-  }
-  if(stepIndex === 2){
-    if(!val(aff.value)) return "所属区分を選択してください";
-  }
-  if(stepIndex === 3){
-    if(!val(carType.value)) return "車種を選択してください";
-    if(!val(carNo.value)) return "車両ナンバーを入力してください";
-    if(!val(black.value)) return "黒ナンバーを選択してください";
-  }
-  if(stepIndex === 4){
-    if(!val(bank.value)) return "銀行を入力してください";
-    if(!val(branch.value)) return "支店を入力してください";
-    if(!val(acctType.value)) return "口座種別を選択してください";
-    if(!val(acctNo.value)) return "口座番号を入力してください";
-    if(!val(acctName.value)) return "口座名義（カナ）を入力してください";
-  }
-  if(stepIndex === 5){
-    if(!licF.files || !licF.files[0]) return "免許証（表面）の画像をアップロードしてください";
-  }
-  if(stepIndex === 6){
-    if(!agree.checked) return "同意が必要です";
-  }
-  return "";
-}
 
-/* =========================
-   NAV BUTTONS
-========================= */
-function goNext(){
-  const err = requireStep(cur);
-  if(err){
-    alert(err);
-    return;
+  function need(v) {
+    return (v || "").trim().length > 0;
   }
-  if(cur < 7){
-    cur++;
+
+  // -------- validation per step ----------
+  function validateStep(stepIndex) {
+    const s = stepIndex + 1;
+
+    if (s === 1) {
+      if (!need(name.value)) return alert("氏名（漢字）を入力してください"), false;
+      if (!need(kana.value)) return alert("フリガナを入力してください"), false;
+      if (!need(phone.value)) return alert("電話番号を入力してください"), false;
+      if (!isEmail(email.value)) return alert("メールアドレスが正しくありません"), false;
+      if (!need(birth.value)) return alert("生年月日を入力してください"), false;
+    }
+
+    if (s === 2) {
+      if (!need(pref.value)) return alert("都道府県を入力してください"), false;
+      if (!need(city.value)) return alert("市区町村を入力してください"), false;
+      if (!need(addr1.value)) return alert("番地を入力してください"), false;
+    }
+
+    if (s === 4) {
+      if (!need(carType.value)) return alert("車種を選択してください"), false;
+      if (!need(carNo.value)) return alert("車両ナンバーを入力してください"), false;
+      if (!need(blackNo.value)) return alert("黒ナンバーを選択してください"), false;
+    }
+
+    if (s === 5) {
+      if (!need(bank.value)) return alert("銀行を入力してください"), false;
+      if (!need(accType.value)) return alert("口座種別を選択してください"), false;
+      if (!need(accNo.value)) return alert("口座番号を入力してください"), false;
+      if (!need(accNameKana.value)) return alert("口座名義（カナ）を入力してください"), false;
+    }
+
+    if (s === 6) {
+      if (!licF.files?.[0]) return alert("免許証 表面（必須）をアップロードしてください"), false;
+    }
+
+    if (s === 7) {
+      if (!agree.checked) return alert("同意が必要です"), false;
+    }
+
+    return true;
+  }
+
+  function goNext() {
+    if (!validateStep(cur)) return;
+    if (cur < 7) cur++;
     show();
   }
-}
-function goBack(){
-  if(cur > 0){
-    cur--;
+
+  function goBack() {
+    if (cur > 0) cur--;
     show();
   }
-}
 
-for(let i=1;i<=8;i++){
-  const b = $("back"+i);
-  if(b) b.addEventListener("click", goBack);
-  const n = $("next"+i);
-  if(n) n.addEventListener("click", goNext);
-}
+  // -------- button wiring（各STEPごとに） ----------
+  // STEP1
+  $("next").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
 
-/* =========================
-   AFF BUTTONS
-========================= */
-document.querySelectorAll(".segBtn").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    aff.value = btn.dataset.val || "";
+  // STEP2
+  $("next2").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back2").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+
+  // STEP3
+  $("next3").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back3").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+
+  // STEP4
+  $("next4").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back4").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+
+  // STEP5
+  $("next5").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back5").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+
+  // STEP6
+  $("next6").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back6").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+
+  // STEP7
+  $("next7").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
+  $("back7").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+
+  // STEP8
+  $("back8").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
+  restart.addEventListener("click", () => { cur = 0; show(); });
+
+  // -------- affiliation buttons ----------
+  document.querySelectorAll(".segBtn").forEach((b) => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".segBtn").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      aff.value = b.dataset.val || "";
+    });
   });
-});
 
-/* =========================
-   PREVIEW
-========================= */
-function setPreview(file, imgEl){
-  if(!file){
-    imgEl.style.display = "none";
-    imgEl.src = "";
-    return;
+  // -------- preview ----------
+  function setPreview(file, imgEl) {
+    if (!file) {
+      imgEl.style.display = "none";
+      imgEl.removeAttribute("src");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    imgEl.src = url;
+    imgEl.style.display = "block";
+    imgEl.onload = () => URL.revokeObjectURL(url);
   }
-  const url = URL.createObjectURL(file);
-  imgEl.src = url;
-  imgEl.style.display = "block";
-}
 
-licF.addEventListener("change", ()=> setPreview(licF.files[0], prevF));
-licB.addEventListener("change", ()=> setPreview(licB.files[0], prevB));
+  licF.addEventListener("change", () => setPreview(licF.files?.[0], prevF));
+  licB.addEventListener("change", () => setPreview(licB.files?.[0], prevB));
 
-/* =========================
-   DONE ACTIONS
-========================= */
-lineBtn.href = OFA_MEMBERSHIP_LINE_URL;
+  // -------- PDF: 免許証「上下余白だけ」自動カット ----------
+  async function cropTopBottomOnly(file){
+    const img = await fileToImage(file);
+    const { canvas, ctx } = makeCanvas(img.naturalWidth, img.naturalHeight);
+    ctx.drawImage(img, 0, 0);
 
-/* PDF: “開く”＝Safari/Chromeの共有/印刷導線がそのまま使える */
-async function makePdfAndOpen(){
-  try{
-    pdfBtn.disabled = true;
-    pdfBtn.textContent = "PDF作成中…";
+    const w = canvas.width;
+    const h = canvas.height;
 
-    // PDF用の内容を組み立て
-    pdfDate.textContent = new Date().toLocaleString("ja-JP");
+    const isBg = (r,g,b,a) => a < 20 || (r > 235 && g > 235 && b > 235);
 
+    const data = ctx.getImageData(0,0,w,h).data;
+
+    const rowHasContent = (y) => {
+      let cnt = 0;
+      const threshold = Math.max(30, Math.floor(w * 0.02));
+      for(let x=0; x<w; x++){
+        const i = (y*w + x) * 4;
+        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        if(!isBg(r,g,b,a)) cnt++;
+        if(cnt > threshold) return true;
+      }
+      return false;
+    };
+
+    let top = 0;
+    while(top < h-1 && !rowHasContent(top)) top++;
+
+    let bottom = h-1;
+    while(bottom > 0 && !rowHasContent(bottom)) bottom--;
+
+    const margin = Math.floor(h * 0.02);
+    top = Math.max(0, top - margin);
+    bottom = Math.min(h-1, bottom + margin);
+
+    const cropH = Math.max(1, bottom - top + 1);
+    if(cropH < h * 0.4){
+      return await fileToDataURL(file);
+    }
+
+    const out = document.createElement("canvas");
+    out.width = w;
+    out.height = cropH;
+    const octx = out.getContext("2d");
+    octx.drawImage(canvas, 0, top, w, cropH, 0, 0, w, cropH);
+
+    return out.toDataURL("image/jpeg", 0.92);
+  }
+
+  function makeCanvas(w,h){
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    return { canvas:c, ctx:c.getContext("2d") };
+  }
+  function fileToImage(file){
+    return new Promise((res, rej)=>{
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = ()=>{ URL.revokeObjectURL(url); res(img); };
+      img.onerror = (e)=>{ URL.revokeObjectURL(url); rej(e); };
+      img.src = url;
+    });
+  }
+  function fileToDataURL(file){
+    return new Promise((res, rej)=>{
+      const r = new FileReader();
+      r.onload = ()=>res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+
+  // -------- PDF build helpers ----------
+  function pdfItem(label, value){
+    const div = document.createElement("div");
+    div.className = "pdfItem";
+    div.innerHTML = `<div class="pdfLabel">${escapeHtml(label)}</div><div class="pdfValue">${escapeHtml(value || "")}</div>`;
+    return div;
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function makeDateStr(){
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,"0");
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  async function makePdfAndOpen(){
+    // 1) PDF用DOMを埋める
+    pdfDate.textContent = "作成日時： " + makeDateStr();
+
+    pdfGrid.innerHTML = "";
+
+    // ★支店いらない → PDFには出さない（入力欄は残してるが出力しない）
     const items = [
-      ["氏名（漢字）", val(name.value)],
-      ["フリガナ", val(kana.value)],
-      ["電話番号", val(phone.value)],
-      ["メール", val(email.value)],
-      ["生年月日", val(birth.value)],
-      ["住所", `${val(zip.value)} ${val(pref.value)}${val(city.value)}${val(addr1.value)} ${val(addr2.value)}`.trim()],
-      ["所属区分", val(aff.value)],
-      ["所属会社名（任意）", val(company.value)],
-      ["車種", val(carType.value)],
-      ["車両ナンバー", val(carNo.value)],
-      ["黒ナンバー", val(black.value)],
-      ["銀行", val(bank.value)],
-      ["支店", val(branch.value)],
-      ["口座種別", val(acctType.value)],
-      ["口座番号", val(acctNo.value)],
-      ["口座名義（カナ）", val(acctName.value)]
+      ["氏名（漢字）", name.value],
+      ["フリガナ", kana.value],
+      ["電話番号", cleanPhone(phone.value)],
+      ["メール", email.value],
+      ["生年月日", birth.value],
+      ["住所", `${zip.value ? zip.value + " " : ""}${pref.value}${city.value}${addr1.value}${addr2.value ? " " + addr2.value : ""}`],
+      ["所属区分", aff.value],                // 表示いらないと言ってたので、必要ならここを消してOK
+      ["所属会社名（任意）", affCompany.value],
+      ["車種", carType.value],
+      ["車両ナンバー", carNo.value],
+      ["黒ナンバー", blackNo.value],
+      ["銀行", bank.value],
+      ["口座種別", accType.value],
+      ["口座番号", accNo.value],
+      ["口座名義（カナ）", accNameKana.value],
     ];
 
-    pdfGrid.innerHTML = items.map(([k,v])=>`
-      <div class="pdfItem">
-        <div class="pdfLabel">${k}</div>
-        <div class="pdfValue">${(v || "").replaceAll("<","&lt;").replaceAll(">","&gt;")}</div>
-      </div>
-    `).join("");
+    items.forEach(([l,v]) => pdfGrid.appendChild(pdfItem(l,v)));
 
-    // 画像はobject-fit:coverで上下余白を自動カット（PDF側CSSで設定済み）
-    if(licF.files[0]) pdfImgF.src = URL.createObjectURL(licF.files[0]);
+    // 免許証画像：上下余白だけカットして “縮小で読めない” を防ぐ
+    if(licF.files?.[0]) pdfImgF.src = await cropTopBottomOnly(licF.files[0]);
     else pdfImgF.removeAttribute("src");
 
-    if(licB.files[0]) pdfImgB.src = URL.createObjectURL(licB.files[0]);
+    if(licB.files?.[0]) pdfImgB.src = await cropTopBottomOnly(licB.files[0]);
     else pdfImgB.removeAttribute("src");
 
-    // 画像の読み込み待ち
-    await waitImagesLoaded([pdfImgF, pdfImgB]);
+    // 2) html2canvas → jsPDF
+    const { jsPDF } = window.jspdf;
 
-    // html2canvas → jsPDF
     const canvas = await html2canvas(pdfPaper, {
-      scale: 2,                // 高精細
+      scale: 2,          // 文字と免許証をくっきり
+      useCORS: true,
       backgroundColor: "#ffffff",
-      useCORS: true
+      logging: false,
     });
 
     const imgData = canvas.toDataURL("image/jpeg", 0.92);
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF("p","mm","a4");
 
-    const pageW = 210, pageH = 297;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    // canvas(px)→PDF(mm) fit
     const imgW = pageW;
     const imgH = (canvas.height * imgW) / canvas.width;
 
     let y = 0;
-    // 1枚で収まらない時はページ分割
-    if(imgH <= pageH){
+    if (imgH <= pageH) {
       pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH, "", "FAST");
-    }else{
+    } else {
+      // 複数ページ対応
       let remaining = imgH;
-      let pos = 0;
-      while(remaining > 0){
-        pdf.addImage(imgData, "JPEG", 0, pos, imgW, imgH, "", "FAST");
+      let position = 0;
+      while (remaining > 0) {
+        pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH, "", "FAST");
         remaining -= pageH;
-        pos -= pageH;
-        if(remaining > 0) pdf.addPage();
+        if (remaining > 0) {
+          pdf.addPage();
+          position -= pageH;
+        }
       }
     }
 
-    const fileName = `OFA_driver_entry_${stamp()}.pdf`;
-
-    // ★重要：iPhoneで「出ない」対策 → blobURLを新規タブで開く
+    // 3) 端末差対策：blob URL で新しいタブに開く（Safari/Chrome）
     const blob = pdf.output("blob");
     const blobUrl = URL.createObjectURL(blob);
 
-    // 新規タブで開く（Safari/Chromeの共有/印刷が使える）
-    const w = window.open(blobUrl, "_blank");
-    if(!w){
-      // ポップアップブロック等の時は保存
-      pdf.save(fileName);
-      showToast("PDFを保存しました");
-      return;
-    }
+    // まずは“開く”を優先（印刷・共有が同じボタンに乗る）
+    window.open(blobUrl, "_blank");
 
-    // ついでにダウンロードもできるように（端末によっては必要）
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    // ついでにDLも試みる（出ない端末は開くだけになる）
+    try{
+      pdf.save(`OFA_driver_entry_${makeDateStr().replace(/[\/: ]/g,"")}.pdf`);
+    }catch(e){}
 
-    showToast("PDFを作成しました（共有/印刷OK）");
-  }catch(e){
-    console.error(e);
-    alert("PDF作成に失敗しました。Safari/Chromeで開き直して再度お試しください。");
-  }finally{
-    pdfBtn.disabled = false;
-    pdfBtn.textContent = "PDF作成";
+    toastShow("PDFを開きました（保存・共有・印刷OK）");
   }
-}
 
-function stamp(){
-  const d = new Date();
-  const pad = (n)=> String(n).padStart(2,"0");
-  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-}
+  // PDFボタン
+  pdfBtn.addEventListener("click", async () => {
+    // STEP8で押された前提だけど、念のため最終チェック
+    if (!licF.files?.[0]) return alert("免許証 表面（必須）がありません");
+    await makePdfAndOpen();
+  });
 
-function waitImagesLoaded(imgEls){
-  return Promise.all(imgEls.map(img=>{
-    return new Promise(res=>{
-      if(!img || !img.getAttribute("src")) return res();
-      if(img.complete) return res();
-      img.onload = ()=>res();
-      img.onerror = ()=>res();
-    });
-  }));
-}
-
-pdfBtn.addEventListener("click", async ()=>{
-  // 完了画面は「LINE→PDF」導線
-  // PDFはいつでも作れるが、LINE未追加だと共有に出ない事があるので案内を強める
-  if(!confirm("先にOFAメンバーシップLINEを追加しましたか？\n（未追加だと共有先にLINEが出ない場合があります）")){
-    // 追加してないならLINEへ
-    window.open(OFA_MEMBERSHIP_LINE_URL, "_blank");
-    return;
-  }
-  await makePdfAndOpen();
-});
-
-restartBtn.addEventListener("click", ()=>{
-  // reset
-  steps.forEach(s=>s.classList.remove("active"));
-  cur = 0;
-
-  // clear inputs
-  [name,kana,phone,email,birth,zip,pref,city,addr1,addr2,company,carNo,bank,branch,acctNo,acctName].forEach(i=> i.value="");
-  carType.value = "";
-  black.value = "";
-  acctType.value = "";
-  aff.value = "";
-  agree.checked = false;
-
-  // seg UI reset
-  document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
-
-  // files reset
-  licF.value = "";
-  licB.value = "";
-  setPreview(null, prevF);
-  setPreview(null, prevB);
-
+  // 初期表示
   show();
-});
-
-finishBtn.addEventListener("click", ()=>{
-  showToast("完了しました");
-});
-
-/* =========================
-   FIX: “次へ行けない”対策
-   - ボタンは全て type=button
-   - step遷移は goNext/goBack で統一
-========================= */
-
-show();
+})();
