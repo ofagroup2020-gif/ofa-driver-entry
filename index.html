@@ -1,169 +1,175 @@
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>OFA GROUP Driver Entry</title>
-  <link rel="stylesheet" href="./style.css" />
-  <meta name="theme-color" content="#ff7a00" />
-</head>
+:root{
+  --bg1:#fff3e8;
+  --bg2:#ffffff;
+  --card:#ffffff;
+  --text:#1f2328;
+  --muted:#6b7280;
+  --line:#e8e8ee;
 
-<body>
-  <div class="bgGlow"></div>
+  --orange:#ff7a00;
+  --orange2:#ffb000;
+  --orangeSoft:rgba(255,122,0,.14);
 
-  <div class="app">
-    <header class="top">
-      <div class="brand">
-        <div class="logo">OFA</div>
-        <div class="brandText">
-          <div class="title">OFA GROUP</div>
-          <div class="sub">Driver Entry</div>
-        </div>
-      </div>
+  --radius:18px;
+}
 
-      <div class="progress">
-        <div class="bar"><div id="barFill" class="barFill"></div></div>
-        <div id="stepText" class="stepText">STEP 1 / 7</div>
-      </div>
-    </header>
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",Segoe UI,Roboto,Helvetica,Arial;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--bg1) 0%, #fffaf6 55%, var(--bg2) 100%);
+}
 
-    <main class="card">
-      <!-- 1 -->
-      <section class="step active" data-step="1">
-        <h2>基本情報</h2>
-        <p class="hint">登録はドライバー本人が入力してください。</p>
+.bgGlow{
+  position:fixed;
+  inset:-120px -120px auto -120px;
+  height:320px;
+  background:radial-gradient(circle at 25% 40%, rgba(255,122,0,.25) 0%, rgba(255,176,0,.18) 35%, rgba(255,255,255,0) 68%);
+  pointer-events:none;
+}
 
-        <label>氏名（漢字）</label>
-        <input id="name" type="text" placeholder="山田 太郎" />
-        <label>フリガナ</label>
-        <input id="kana" type="text" placeholder="ヤマダ タロウ" />
-        <label>電話番号</label>
-        <input id="phone" type="tel" placeholder="090-xxxx-xxxx" />
-        <label>メールアドレス</label>
-        <input id="email" type="email" placeholder="example@gmail.com" />
-        <label>生年月日</label>
-        <input id="birth" type="date" />
-      </section>
+.app{
+  max-width:540px;
+  margin:0 auto;
+  padding:18px 14px 28px;
+}
 
-      <!-- 2 -->
-      <section class="step" data-step="2">
-        <h2>住所（日本語）</h2>
-        <label>郵便番号</label>
-        <input id="zip" type="text" placeholder="890-0000" />
-        <label>都道府県</label>
-        <input id="pref" type="text" placeholder="鹿児島県" />
-        <label>市区町村</label>
-        <input id="city" type="text" placeholder="鹿児島市" />
-        <label>番地</label>
-        <input id="addr1" type="text" placeholder="〇〇町1-2-3" />
-        <label>建物名（任意）</label>
-        <input id="addr2" type="text" placeholder="〇〇マンション101" />
-      </section>
+.top{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  margin:6px 0 14px;
+}
 
-      <!-- 3 -->
-      <section class="step" data-step="3">
-        <h2>所属区分</h2>
-        <div class="seg">
-          <button class="segBtn" data-value="協力会社" type="button">協力会社</button>
-          <button class="segBtn" data-value="フランチャイズ（FC）" type="button">FC</button>
-          <button class="segBtn" data-value="個人ドライバー" type="button">個人</button>
-        </div>
-        <input id="affType" type="hidden" />
-        <label>所属会社名（任意）</label>
-        <input id="company" type="text" placeholder="〇〇運送 / 株式会社〇〇 など" />
-      </section>
+.brand{display:flex;align-items:center;gap:12px;}
 
-      <!-- 4 -->
-      <section class="step" data-step="4">
-        <h2>車両情報</h2>
-        <label>車種</label>
-        <select id="vehicleType">
-          <option value="">選択してください</option>
-          <option>軽バン</option>
-          <option>軽箱</option>
-          <option>軽トラ</option>
-          <option>その他</option>
-        </select>
-        <label>車両ナンバー</label>
-        <input id="plate" type="text" placeholder="鹿児島 480 あ 12-34" />
-        <label>黒ナンバー</label>
-        <select id="blackPlate">
-          <option value="">選択してください</option>
-          <option>あり</option>
-          <option>なし</option>
-        </select>
-      </section>
+.logo{
+  width:46px;height:46px;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  color:#111;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;letter-spacing:1px;
+  box-shadow:0 10px 24px rgba(255,122,0,.22);
+}
 
-      <!-- 5 -->
-      <section class="step" data-step="5">
-        <h2>免許証アップロード</h2>
-        <p class="hint">表面は必須です。</p>
+.title{font-weight:900;font-size:18px;}
+.sub{color:var(--muted);font-size:12px;margin-top:2px;}
 
-        <div class="upload">
-          <div>
-            <label>表面（必須）</label>
-            <input id="licFront" type="file" accept="image/*" />
-            <img id="licFrontPrev" class="preview" alt="" />
-          </div>
-          <div>
-            <label>裏面（任意）</label>
-            <input id="licBack" type="file" accept="image/*" />
-            <img id="licBackPrev" class="preview" alt="" />
-          </div>
-        </div>
-      </section>
+.progress{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.bar{flex:1;height:10px;background:#fff;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
+.barFill{height:100%;width:0%;background:linear-gradient(90deg,var(--orange),var(--orange2));}
+.stepText{font-size:12px;color:var(--muted);min-width:86px;text-align:right;}
 
-      <!-- 6 -->
-      <section class="step" data-step="6">
-        <h2>銀行振込先</h2>
-        <label>銀行名</label>
-        <input id="bank" type="text" placeholder="〇〇銀行" />
-        <label>支店名</label>
-        <input id="branch" type="text" placeholder="〇〇支店" />
-        <label>口座種別</label>
-        <select id="acctType">
-          <option value="">選択してください</option>
-          <option>普通</option>
-          <option>当座</option>
-        </select>
-        <label>口座番号</label>
-        <input id="acctNo" type="text" placeholder="1234567" />
-        <label>口座名義（カナ）</label>
-        <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
-      </section>
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 16px 14px;
+  box-shadow:0 12px 34px rgba(0,0,0,.07);
+}
 
-      <!-- 7 -->
-      <section class="step" data-step="7">
-        <h2>登録内容の確認</h2>
-        <div id="review" class="review"></div>
+h2{margin:2px 0 10px;font-size:18px;}
+.hint{margin:0 0 12px;color:var(--muted);font-size:12px;line-height:1.45;}
 
-        <div class="notice">
-          登録完了後、<strong>日本語PDF（免許写真付き）</strong>を自動作成し、<br />
-          <strong>OFA管理LINEへ自動送信</strong>されます。
-        </div>
+label{display:block;margin:12px 0 6px;font-size:12px;color:#111;}
+input,select{
+  width:100%;
+  padding:12px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  outline:none;
+  font-size:14px;
+  background:#fff;
+}
+input:focus,select:focus{
+  border-color:rgba(255,122,0,.55);
+  box-shadow:0 0 0 4px rgba(255,122,0,.16);
+}
 
-        <button id="submitBtn" class="primary big" type="button">
-          登録完了 → PDF作成 → LINE自動送信
-        </button>
+.step{display:none;}
+.step.active{display:block;}
 
-        <p class="small">
-          ※送信後、OFA担当よりご連絡し案件を決定します。
-        </p>
-      </section>
+.nav{display:flex;gap:10px;margin-top:14px;}
+button{
+  border:0;
+  padding:12px 14px;
+  border-radius:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.primary{
+  background:linear-gradient(135deg,var(--orange),var(--orange2));
+  color:#111;
+  flex:1;
+  box-shadow:0 12px 24px rgba(255,122,0,.18);
+}
+.ghost{
+  background:#fff;
+  border:1px solid var(--line);
+  color:#111;
+  width:120px;
+}
+.big{width:100%;padding:14px 16px;border-radius:16px;margin-top:10px;}
 
-      <div class="nav">
-        <button id="backBtn" class="ghost" type="button">戻る</button>
-        <button id="nextBtn" class="primary" type="button">次へ</button>
-      </div>
+.seg{display:flex;gap:10px;margin:10px 0 6px;}
+.segBtn{flex:1;background:#fff;border:1px solid var(--line);}
+.segBtn.active{
+  border-color:rgba(255,122,0,.65);
+  box-shadow:0 0 0 4px rgba(255,122,0,.14);
+}
 
-      <div id="toast" class="toast"></div>
-    </main>
+.upload{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.preview{
+  width:100%;
+  margin-top:10px;
+  border-radius:14px;
+  border:1px dashed var(--line);
+  background:#fafafa;
+  min-height:140px;
+  object-fit:cover;
+  display:none;
+}
+.preview.show{display:block;}
 
-    <footer class="foot">
-      <div class="mini">© OFA GROUP</div>
-    </footer>
-  </div>
+.review{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  background:#fffaf5;
+  font-size:13px;
+  line-height:1.55;
+}
+.review strong{display:inline-block;min-width:110px;}
 
-  <script src="./app.js"></script>
-</body>
-</html>
+.notice{
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,122,0,.35);
+  background:var(--orangeSoft);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.small{font-size:11px;color:var(--muted);margin-top:10px;}
+
+.toast{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:18px;
+  background:#111;
+  color:#fff;
+  padding:10px 12px;
+  border-radius:999px;
+  font-size:12px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+}
+.toast.show{opacity:1;}
+
+.foot{margin-top:14px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px;}
