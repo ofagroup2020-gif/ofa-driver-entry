@@ -9,7 +9,6 @@
   --line:#00c300;
   --shadow: 0 18px 50px rgba(0,0,0,.18);
   --radius: 22px;
-  --radius2: 18px;
   --safeTop: env(safe-area-inset-top);
   --safeBottom: env(safe-area-inset-bottom);
 }
@@ -71,8 +70,15 @@ body{
 .logoWrap.logoFallback .logoFallbackBadge{display:block}
 
 .brand{min-width:0}
-.brandName{font-weight:900;letter-spacing:.06em}
-.brandSub{font-size:12px;color:var(--muted);margin-top:2px}
+.brandName{
+  font-weight:900;
+  letter-spacing:.06em;
+}
+.brandSub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+}
 
 .chip{
   display:flex;align-items:center;gap:8px;
@@ -109,7 +115,10 @@ body{
   box-shadow: 0 6px 18px rgba(0,0,0,.18);
 }
 .dots{display:flex;gap:9px;justify-content:center;margin-top:12px}
-.d{width:10px;height:10px;border-radius:999px;background: rgba(255,255,255,.55)}
+.d{
+  width:10px;height:10px;border-radius:999px;
+  background: rgba(255,255,255,.55);
+}
 .d.on{
   width:18px;
   background: radial-gradient(circle at 30% 30%, #ff7a00, #6a00ff);
@@ -144,7 +153,11 @@ body{
 .b7{border-left:6px solid #00c300}
 .b8{border-left:6px solid #6a00ff}
 
-h1{margin:12px 0 6px;font-size:26px;letter-spacing:.02em}
+h1{
+  margin: 12px 0 6px;
+  font-size: 26px;
+  letter-spacing:.02em;
+}
 .head p{margin:0 0 10px;color:var(--muted);line-height:1.5}
 
 .step{display:none}
@@ -173,7 +186,10 @@ input:focus,select:focus{
 }
 .mt{margin-top:10px}
 
-.seg{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.seg{
+  display:flex;gap:10px;flex-wrap:wrap;
+  margin-top: 6px;
+}
 .segBtn{
   flex:1;
   min-width: 120px;
@@ -188,7 +204,7 @@ input:focus,select:focus{
 .segBtn.active{
   border-color: transparent;
   background: linear-gradient(90deg, rgba(255,122,0,.95), rgba(255,45,85,.92), rgba(106,0,255,.90));
-  color:#fff;
+  color:white;
 }
 
 .uploadGrid{
@@ -246,29 +262,44 @@ input:focus,select:focus{
 .note{margin-top:8px;color:var(--muted);font-size:13px}
 
 .ctaStack{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+
+/* ★DONEの横3ボタン */
+.nav{
+  display:flex; gap:10px;
+  margin-top: 14px;
+}
+.nav a, .nav button{
+  flex:1;
+  min-width: 0;
+}
+
 .btnPrimary,.btnLine,.btnGhost{
   border:none; cursor:pointer;
   border-radius: 999px;
-  padding: 16px 16px;
+  padding: 14px 10px;
   font-weight: 900;
   letter-spacing:.04em;
-  font-size: 16px;
+  font-size: 14px;
   text-align:center;
   text-decoration:none;
   box-shadow: 0 18px 40px rgba(0,0,0,.16);
+  display:flex;align-items:center;justify-content:center;
+  white-space:nowrap;
 }
-.btnPrimary{background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3)); color:#fff}
-.btnLine{background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95)); color:#fff}
+.btnPrimary{
+  background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3));
+  color:white;
+}
+.btnLine{
+  background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95));
+  color:white;
+}
 .btnGhost{
   background: rgba(255,255,255,.78);
   color:#0b1220;
   border: 1px solid rgba(30,40,60,.10);
   box-shadow: 0 14px 30px rgba(0,0,0,.08);
 }
-
-.nav{display:flex; gap:12px;margin-top:14px}
-.nav .btnGhost{flex:1}
-.nav .btnPrimary{flex:1}
 
 .subHelp{color:var(--muted);font-size:13px;line-height:1.55}
 
@@ -278,7 +309,7 @@ input:focus,select:focus{
   bottom: calc(16px + var(--safeBottom));
   transform: translateX(-50%);
   background: rgba(10,16,26,.90);
-  color: #fff;
+  color: white;
   padding: 12px 14px;
   border-radius: 16px;
   font-weight: 900;
@@ -306,6 +337,7 @@ input:focus,select:focus{
   .grid{grid-template-columns:1fr}
   .uploadGrid{grid-template-columns:1fr}
   h1{font-size:24px}
+  .btnPrimary,.btnLine,.btnGhost{font-size:13px;padding:14px 8px}
 }
 
 /* ===== PDF paper (hidden) ===== */
@@ -346,7 +378,11 @@ input:focus,select:focus{
 .pdfLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:6px}
 .pdfValue{font-size:14px;font-weight:900;color:#111;word-break:break-word}
 
-.pdfSectionTitle{margin-top:16px;font-size:16px;font-weight:900}
+.pdfSectionTitle{
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 900;
+}
 
 .pdfImgGrid{
   margin-top: 10px;
@@ -362,9 +398,8 @@ input:focus,select:focus{
 .pdfImgLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:8px}
 .pdfImgBox img{
   width:100%;
-  height: 260px;
-  object-fit: cover; /* ★ここが重要：縮小しない。はみ出しは自動カット */
-  object-position: center;
+  height: 320px;
+  object-fit: cover;   /* ★上下を自動カットして大きく見せる */
   border-radius: 10px;
   background:#fafafa;
   border:1px solid #eee;
