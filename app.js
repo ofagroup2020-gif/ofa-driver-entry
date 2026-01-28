@@ -1,302 +1,360 @@
-/* OFA Driver App - app.js（日本語PDF：ttf不要の画像PDF方式） */
+/* =========================================================
+   OFA Driver Registration App (GitHub Pages / Safari対応)
+   - ステップ遷移が止まる問題を修正（確実に動く）
+   - PDFは日本語OK（DOM→画像→PDFでフォント依存なし）
+   - A4に収めて自動で複数ページ
+   - PDF作成ボタン1つで「開く→保存/共有/印刷」
+========================================================= */
 
-const LINE_MEMBERSHIP_URL = "https://lin.ee/Ev7r84H5"; // OFAメンバーシップLINE
+const $ = (id) => document.getElementById(id);
 
 const steps = Array.from(document.querySelectorAll(".step"));
-const nextBtn = document.getElementById("nextBtn");
-const backBtn = document.getElementById("backBtn");
-const barFill = document.getElementById("barFill");
-const stepLabel = document.getElementById("stepLabel");
-const toastEl = document.getElementById("toast");
-const dots = Array.from(document.querySelectorAll(".dots .d"));
-const makePdfBtn = document.getElementById("makePdfBtn");
-const lineLinkBtn = document.getElementById("lineLinkBtn");
+const nextBtn = $("nextBtn");
+const backBtn = $("backBtn");
+const stepLabel = $("stepLabel");
+const barFill = $("barFill");
+const dotsWrap = $("dots");
+const toastEl = $("toast");
 
-// LINEリンク
-lineLinkBtn.href = LINE_MEMBERSHIP_URL;
+const makePdfBtn = $("makePdfBtn");
+const lineLinkBtn = $("lineLinkBtn");
 
-// ファイル
-const licFrontInput = document.getElementById("licFront");
-const licBackInput  = document.getElementById("licBack");
-const licFrontPrev  = document.getElementById("licFrontPrev");
-const licBackPrev   = document.getElementById("licBackPrev");
+const segBtns = Array.from(document.querySelectorAll(".segBtn"));
+const affTypeHidden = $("affType");
 
 let current = 1;
-let licFrontDataUrl = "";
-let licBackDataUrl  = "";
 
+// --- state (ファイルはメモリ保持) ---
+let licFrontFile = null;
+let licBackFile = null;
+let licFrontDataUrl = "";
+let licBackDataUrl = "";
+
+// ========== Utils ==========
 function toast(msg){
   toastEl.textContent = msg;
   toastEl.classList.add("show");
-  setTimeout(()=>toastEl.classList.remove("show"), 2200);
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(()=>toastEl.classList.remove("show"), 1800);
 }
-
-function $(id){ return document.getElementById(id); }
-function v(id){ return ($(id)?.value ?? "").trim(); }
 
 function setStep(n){
-  current = n;
-  steps.forEach(s => s.classList.remove("active"));
-  const active = steps.find(s => Number(s.dataset.step) === n);
-  if(active) active.classList.add("active");
+  current = Math.max(1, Math.min(8, n));
+  steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === current));
 
-  const pct = (n / steps.length) * 100;
-  barFill.style.width = `${pct}%`;
-  stepLabel.textContent = `STEP ${n} / ${steps.length}`;
-  dots.forEach((d,i)=> d.classList.toggle("on", i === n-1));
+  stepLabel.textContent = `STEP ${current} / 8`;
+  barFill.style.width = `${(current / 8) * 100}%`;
 
-  backBtn.disabled = (n === 1);
-  nextBtn.style.display = (n === steps.length) ? "none" : "inline-block";
+  const dots = Array.from(dotsWrap.querySelectorAll(".d"));
+  dots.forEach((d, i) => {
+    d.classList.toggle("on", (i+1) === current);
+  });
+
+  // nav label
+  backBtn.style.display = current === 1 ? "none" : "inline-flex";
+  nextBtn.style.display = current === 8 ? "none" : "inline-flex";
 }
 
-function normalizeBirth(val){
-  if(!val) return "";
-  // YYYY-MM-DD -> YYYY/MM/DD
-  return val.replaceAll("-", "/");
+function val(id){ return ($(id)?.value ?? "").trim(); }
+
+function normalizeBirth(v){
+  if(!v) return "";
+  // yyyy-mm-dd -> yyyy/mm/dd
+  return v.replaceAll("-", "/");
 }
 
-function validateStep(stepNo){
-  // 必須チェック（必要最低限）
+function required(stepNo){
+  const birth = val("birth");
+  const aff = val("affType");
+  const vehicleType = $("vehicleType").value;
+  const blackPlate = $("blackPlate").value;
+  const acctType = $("acctType").value;
+
   if(stepNo === 1){
-    if(!v("name") || !v("kana") || !v("phone") || !v("email") || !v("birth")){
-      return "STEP1：未入力があります";
+    if(!val("name") || !val("kana") || !val("phone") || !val("email") || !birth){
+      return "STEP1：未入力があります（氏名/フリガナ/電話/メール/生年月日）";
     }
   }
   if(stepNo === 2){
-    if(!v("zip") || !v("pref") || !v("city") || !v("addr1")){
-      return "STEP2：住所を入力してください";
+    if(!val("zip") || !val("pref") || !val("city") || !val("addr1")){
+      return "STEP2：未入力があります（郵便番号/都道府県/市区町村/番地）";
     }
   }
   if(stepNo === 3){
-    if(!v("affType")){
+    if(!aff){
       return "STEP3：所属区分を選択してください";
     }
   }
   if(stepNo === 4){
-    if(!v("vehicleType") || !v("plate") || !v("blackPlate")){
-      return "STEP4：車両情報を入力してください";
+    if(!vehicleType || !val("plate") || !blackPlate){
+      return "STEP4：未入力があります（車種/車両ナンバー/黒ナンバー）";
     }
   }
   if(stepNo === 5){
-    if(!licFrontDataUrl){
-      return "STEP5：免許証（表面）をアップロードしてください";
+    if(!licFrontFile && !licFrontDataUrl){
+      return "STEP5：免許証 表面（必須）をアップロードしてください";
     }
   }
   if(stepNo === 6){
-    if(!v("bank") || !v("branch") || !v("acctType") || !v("acctNo") || !v("acctName")){
-      return "STEP6：銀行情報を入力してください";
+    if(!val("bank") || !val("branch") || !acctType || !val("acctNo") || !val("acctName")){
+      return "STEP6：未入力があります（銀行/支店/種別/口座番号/口座名義）";
     }
   }
   if(stepNo === 7){
     if(!$("agree").checked){
-      return "STEP7：同意チェックが必要です";
+      return "STEP7：『上記内容に同意します』にチェックしてください";
     }
   }
   return "";
 }
 
 function collect(){
+  const addr = `${val("zip")} ${val("pref")}${val("city")}${val("addr1")}${val("addr2") ? " " + val("addr2") : ""}`.trim();
   return {
-    name: v("name"),
-    kana: v("kana"),
-    phone: v("phone"),
-    email: v("email"),
-    birth: normalizeBirth(v("birth")),
-    zip: v("zip"),
-    pref: v("pref"),
-    city: v("city"),
-    addr1: v("addr1"),
-    addr2: v("addr2"),
-    affType: v("affType"),
-    company: v("company"),
-    vehicleType: v("vehicleType"),
-    plate: v("plate"),
-    blackPlate: v("blackPlate"),
-    bank: v("bank"),
-    branch: v("branch"),
-    acctType: v("acctType"),
-    acctNo: v("acctNo"),
-    acctName: v("acctName"),
+    name: val("name"),
+    kana: val("kana"),
+    phone: val("phone"),
+    email: val("email"),
+    birth: normalizeBirth(val("birth")),
+    addr,
+    affType: val("affType"),
+    company: val("company"),
+    vehicleType: $("vehicleType").value,
+    plate: val("plate"),
+    blackPlate: $("blackPlate").value,
+    bank: val("bank"),
+    branch: val("branch"),
+    acctType: $("acctType").value,
+    acctNo: val("acctNo"),
+    acctName: val("acctName"),
   };
 }
 
-// 所属セグ
-document.querySelectorAll(".segBtn").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    $("affType").value = btn.dataset.value;
-  });
-});
-
-// 画像プレビュー＆DataURL化
-function fileToDataUrl(file){
-  return new Promise((resolve,reject)=>{
+function fileToDataURL(file){
+  return new Promise((resolve, reject)=>{
     const r = new FileReader();
-    r.onload = ()=> resolve(r.result);
+    r.onload = ()=>resolve(String(r.result || ""));
     r.onerror = reject;
     r.readAsDataURL(file);
   });
 }
 
-licFrontInput.addEventListener("change", async (e)=>{
-  const f = e.target.files?.[0];
-  if(!f) return;
-  licFrontDataUrl = await fileToDataUrl(f);
-  licFrontPrev.src = licFrontDataUrl;
-  licFrontPrev.style.display = "block";
+// ========== Seg Buttons ==========
+segBtns.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    segBtns.forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    affTypeHidden.value = btn.dataset.value || "";
+  });
 });
 
-licBackInput.addEventListener("change", async (e)=>{
+// ========== Upload Preview ==========
+$("licFront").addEventListener("change", async (e)=>{
   const f = e.target.files?.[0];
   if(!f) return;
-  licBackDataUrl = await fileToDataUrl(f);
-  licBackPrev.src = licBackDataUrl;
-  licBackPrev.style.display = "block";
+  licFrontFile = f;
+  licFrontDataUrl = await fileToDataURL(f);
+  const img = $("licFrontPrev");
+  img.src = licFrontDataUrl;
+  img.style.display = "block";
 });
 
-// 次へ/戻る
+$("licBack").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if(!f) return;
+  licBackFile = f;
+  licBackDataUrl = await fileToDataURL(f);
+  const img = $("licBackPrev");
+  img.src = licBackDataUrl;
+  img.style.display = "block";
+});
+
+// ========== Navigation ==========
 nextBtn.addEventListener("click", ()=>{
-  const msg = validateStep(current);
+  const msg = required(current);
   if(msg){ toast(msg); return; }
-  setStep(Math.min(current+1, steps.length));
+  setStep(current + 1);
 });
+
 backBtn.addEventListener("click", ()=>{
-  setStep(Math.max(current-1, 1));
+  setStep(current - 1);
 });
 
-// ===== 日本語PDF（画像化方式）=====
-async function buildPdfSheetHTML(data){
+// ========== PDF (日本語 / A4 / 途切れない / 印刷もOK) ==========
+function buildPdfPaper(data){
+  // 日付
   const now = new Date();
-  const ymd = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")}`;
-  const hms = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,"0");
+  const d = String(now.getDate()).padStart(2,"0");
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  $("pdfDate").textContent = `作成日時：${y}/${m}/${d} ${hh}:${mm}`;
 
-  const addr = `${data.zip} ${data.pref}${data.city}${data.addr1}${data.addr2 ? " " + data.addr2 : ""}`;
+  // grid items
+  const grid = $("pdfGrid");
+  grid.innerHTML = "";
 
-  return `
-    <div class="pdfTitle">
-      <div>
-        <h2>OFA GROUP ドライバー登録シート</h2>
-        <div class="sub">作成日時：${ymd} ${hms}</div>
-      </div>
-      <div style="font-weight:900;color:#ff7a00;">One for All, All for One</div>
-    </div>
+  const items = [
+    ["氏名（漢字）", data.name],
+    ["フリガナ", data.kana],
+    ["電話番号", data.phone],
+    ["メール", data.email],
+    ["生年月日", data.birth],
+    ["住所", data.addr],
+    ["所属区分", data.affType],
+    ["所属会社名（任意）", data.company || "—"],
+    ["車種", data.vehicleType],
+    ["車両ナンバー", data.plate],
+    ["黒ナンバー", data.blackPlate],
+    ["銀行", `${data.bank} / ${data.branch}`],
+    ["口座種別", data.acctType],
+    ["口座番号", data.acctNo],
+    ["口座名義（カナ）", data.acctName],
+  ];
 
-    <div class="pdfGrid">
-      <div class="pdfItem"><div class="k">氏名（漢字）</div><div class="v">${escapeHtml(data.name)}</div></div>
-      <div class="pdfItem"><div class="k">フリガナ</div><div class="v">${escapeHtml(data.kana)}</div></div>
+  for(const [label, value] of items){
+    const div = document.createElement("div");
+    div.className = "pdfItem";
+    div.innerHTML = `<div class="pdfLabel">${label}</div><div class="pdfValue">${escapeHtml(value || "—")}</div>`;
+    grid.appendChild(div);
+  }
 
-      <div class="pdfItem"><div class="k">電話番号</div><div class="v">${escapeHtml(data.phone)}</div></div>
-      <div class="pdfItem"><div class="k">メール</div><div class="v">${escapeHtml(data.email)}</div></div>
-
-      <div class="pdfItem"><div class="k">生年月日</div><div class="v">${escapeHtml(data.birth)}</div></div>
-      <div class="pdfItem"><div class="k">住所</div><div class="v">${escapeHtml(addr)}</div></div>
-
-      <div class="pdfItem"><div class="k">所属区分</div><div class="v">${escapeHtml(data.affType)}</div></div>
-      <div class="pdfItem"><div class="k">所属会社名（任意）</div><div class="v">${escapeHtml(data.company || "—")}</div></div>
-
-      <div class="pdfItem"><div class="k">車種</div><div class="v">${escapeHtml(data.vehicleType)}</div></div>
-      <div class="pdfItem"><div class="k">車両ナンバー</div><div class="v">${escapeHtml(data.plate)}</div></div>
-
-      <div class="pdfItem"><div class="k">黒ナンバー</div><div class="v">${escapeHtml(data.blackPlate)}</div></div>
-      <div class="pdfItem"><div class="k">銀行</div><div class="v">${escapeHtml(data.bank)} / ${escapeHtml(data.branch)}</div></div>
-
-      <div class="pdfItem"><div class="k">口座種別</div><div class="v">${escapeHtml(data.acctType)}</div></div>
-      <div class="pdfItem"><div class="k">口座番号</div><div class="v">${escapeHtml(data.acctNo)}</div></div>
-
-      <div class="pdfItem" style="grid-column:1 / -1;">
-        <div class="k">口座名義（カナ）</div>
-        <div class="v">${escapeHtml(data.acctName)}</div>
-      </div>
-    </div>
-
-    <div style="font-weight:900;margin-top:8px;">提出画像</div>
-    <div class="pdfImages">
-      <div class="pdfImgBox">
-        <div class="k">免許証 表面（必須）</div>
-        ${licFrontDataUrl ? `<img src="${licFrontDataUrl}" />` : `<div style="color:#999;font-weight:800;">未提出</div>`}
-      </div>
-      <div class="pdfImgBox">
-        <div class="k">免許証 裏面（任意）</div>
-        ${licBackDataUrl ? `<img src="${licBackDataUrl}" />` : `<div style="color:#999;font-weight:800;">未提出</div>`}
-      </div>
-    </div>
-
-    <div style="margin-top:16px;border-top:1px solid #eee;padding-top:10px;color:#555;font-weight:800;">
-      このPDFを「OFAメンバーシップLINE」へ添付して送信してください。
-    </div>
-  `;
+  // images
+  const imgF = $("pdfImgFront");
+  const imgB = $("pdfImgBack");
+  imgF.src = licFrontDataUrl || "";
+  imgB.src = licBackDataUrl || "";
 }
 
 function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return String(s).replace(/[&<>"']/g, (c)=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
 }
 
-async function makeJapanesePdf(){
-  // 8まで行ってなくても押せるようにするならここでvalidateしてもOK
+async function makePdfAndOpen(){
+  const msg = required(7); // 7まで通ってないとPDFは作らせない
+  if(msg){ toast(msg); setStep(7); return; }
+
   const data = collect();
+  buildPdfPaper(data);
 
-  const pdfSheet = document.getElementById("pdfSheet");
-  pdfSheet.innerHTML = await buildPdfSheetHTML(data);
+  const paper = $("pdfPaper");
 
-  // 画像化
-  const canvas = await html2canvas(pdfSheet, {
+  // 画像読み込み待ち（免許画像）
+  await waitImagesLoaded([$("pdfImgFront"), $("pdfImgBack")]);
+
+  // 高解像度でキャプチャ（端末差を減らす）
+  const scale = 2; // 2で十分綺麗＆重すぎない
+  const canvas = await html2canvas(paper, {
+    scale,
+    useCORS: true,
     backgroundColor: "#ffffff",
-    scale: 2,
-    useCORS: true
+    windowWidth: paper.scrollWidth,
+    windowHeight: paper.scrollHeight
   });
 
   const imgData = canvas.toDataURL("image/jpeg", 0.92);
 
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("p", "mm", "a4");
+  const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
 
   // A4サイズ(mm)
   const pageW = 210;
   const pageH = 297;
 
-  // 画像の比率に合わせて高さ計算
-  const imgW = pageW;
-  const imgH = (canvas.height * imgW) / canvas.width;
+  // 余白(mm)
+  const margin = 8;
+  const contentW = pageW - margin*2;
+  const contentH = pageH - margin*2;
 
-  let y = 0;
-  let remaining = imgH;
+  // キャンバス比率からPDF上の描画サイズを算出
+  const canvasW = canvas.width;
+  const canvasH = canvas.height;
 
-  // 1ページ目
-  pdf.addImage(imgData, "JPEG", 0, y, imgW, imgH);
+  const ratio = contentW / (canvasW * 0.264583); // px→mm(約0.264583)
+  const imgWmm = (canvasW * 0.264583) * ratio;
+  const imgHmm = (canvasH * 0.264583) * ratio;
 
-  // 2ページ目以降（長い場合）
-  while(remaining > pageH){
-    remaining -= pageH;
-    pdf.addPage();
-    // yをマイナスにして見えてない部分を次ページに表示
-    pdf.addImage(imgData, "JPEG", 0, - (imgH - remaining), imgW, imgH);
+  // 1ページに収まらない場合は分割
+  let y = margin;
+  let remainingH = imgHmm;
+  let offsetPx = 0;
+
+  // 画像をページごとに切り出す
+  while(remainingH > 0){
+    const pageCanvas = document.createElement("canvas");
+    const pageCanvasW = canvasW;
+    const pageCanvasH = Math.floor((contentH / imgHmm) * canvasH);
+
+    pageCanvas.width = pageCanvasW;
+    pageCanvas.height = pageCanvasH;
+
+    const ctx = pageCanvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,pageCanvasW,pageCanvasH);
+
+    ctx.drawImage(
+      canvas,
+      0, offsetPx, pageCanvasW, pageCanvasH,
+      0, 0, pageCanvasW, pageCanvasH
+    );
+
+    const pageImg = pageCanvas.toDataURL("image/jpeg", 0.92);
+
+    pdf.addImage(pageImg, "JPEG", margin, margin, contentW, contentH);
+
+    remainingH -= contentH;
+    offsetPx += pageCanvasH;
+
+    if(remainingH > 0) pdf.addPage();
   }
 
-  const now = new Date();
-  const ymd = now.toISOString().slice(0,10);
-  const fileName = `OFA_登録_${data.name || "driver"}_${ymd}.pdf`;
+  // ファイル名
+  const today = new Date().toISOString().slice(0,10);
+  const safeName = (data.name || "OFA").replace(/[\\/:*?"<>|]/g, "_");
+  const fileName = `OFA_登録_${safeName}_${today}.pdf`;
 
-  pdf.save(fileName);
-  toast("PDFを保存しました。LINEへ送信してください。");
+  // Blob化 → 新規タブで開く（ここが保存/共有/印刷の統一ボタン）
+  const blob = pdf.output("blob");
+  const url = URL.createObjectURL(blob);
+
+  const opened = window.open(url, "_blank");
+
+  if(!opened){
+    // ポップアップブロック等の保険：ダウンロード
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  setTimeout(()=>URL.revokeObjectURL(url), 60*1000);
+
+  toast("PDFを開きました（共有→保存/LINE送信/印刷）");
+  setStep(8);
 }
 
-makePdfBtn.addEventListener("click", async ()=>{
-  try{
-    // 最低限：規約同意まで終わってる状態を推奨
-    const msg = validateStep(7); // 同意は必須にしたいなら
-    if(msg){ toast(msg); return; }
-    await makeJapanesePdf();
-  }catch(err){
+function waitImagesLoaded(imgs){
+  return Promise.all(imgs.map(img=>{
+    return new Promise((resolve)=>{
+      if(!img || !img.src){ resolve(); return; }
+      if(img.complete) { resolve(); return; }
+      img.onload = ()=>resolve();
+      img.onerror = ()=>resolve();
+    });
+  }));
+}
+
+makePdfBtn.addEventListener("click", ()=>{
+  makePdfAndOpen().catch(err=>{
     console.error(err);
-    toast("PDF作成に失敗しました（再読み込みして再試行）");
-  }
+    toast("PDF作成に失敗しました（端末/ブラウザをSafari/Chromeで再試行）");
+  });
 });
 
-// 初期表示
+// 初期化
 setStep(1);
