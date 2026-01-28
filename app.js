@@ -7,24 +7,27 @@ const barFill = document.getElementById('barFill');
 const dotsWrap = document.getElementById('dots');
 const toast = document.getElementById('toast');
 
-const lineBtn = document.getElementById('lineBtn');
-const pdfBtn = document.getElementById('pdfBtn');
-const shareBtn = document.getElementById('shareBtn');
-
 const agree = document.getElementById('agree');
 
-const state = {
-  pdfBlob: null,
-  pdfFileName: null
-};
+const state = { pdfBlob: null, pdfFileName: null };
 
-// ★ここをあなたの「OFAメンバーシップLINE」URLに差し替え
-// 例：line://ti/p/@xxxxx または https://lin.ee/xxxxx
+// ★ここをあなたのLINEに差し替え
 const LINE_URL = "https://line.me/R/ti/p/@YOUR_LINE_ID";
-lineBtn.href = LINE_URL;
 
-/* DOTS生成 */
+/* ========= ユーティリティ ========= */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function showToast(msg){
+  if(!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 1500);
+}
+
+/* ========= DOTS生成 ========= */
 function buildDots(){
+  if(!dotsWrap) return;
   dotsWrap.innerHTML = '';
   for(let i=0;i<8;i++){
     const d = document.createElement('div');
@@ -34,65 +37,152 @@ function buildDots(){
 }
 buildDots();
 
-function showToast(msg){
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'), 1500);
-}
-
+/* ========= 画面更新 ========= */
 function updateUI(){
   steps.forEach(s=>s.classList.remove('active'));
-  steps[cur].classList.add('active');
+  steps[cur]?.classList.add('active');
 
-  stepNo.textContent = String(cur + 1);
-  const pct = ((cur+1)/8)*100;
-  barFill.style.width = pct + '%';
+  if(stepNo) stepNo.textContent = String(cur + 1);
 
-  const dots = Array.from(dotsWrap.querySelectorAll('.d'));
-  dots.forEach((d, i)=> d.classList.toggle('on', i===cur));
-
-  // DONE以外は、下の3ボタンは表示しない（DONE内にあるのでOK）
-}
-updateUI();
-
-/* 画面遷移（前/次）用の共通関数 */
-function next(){
-  // STEP7（index=6）は同意チェック必須
-  if(cur === 6 && !agree.checked){
-    alert('同意が必要です');
-    return;
+  if(barFill){
+    const pct = ((cur+1)/8)*100;
+    barFill.style.width = pct + '%';
   }
+
+  if(dotsWrap){
+    const dots = $all('#dots .d');
+    dots.forEach((d, i)=> d.classList.toggle('on', i===cur));
+  }
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ========= 遷移 ========= */
+function validateStep(index){
+  // 例：最低限の必須チェック（必要なら追加）
+  if(index === 0){
+    // 1/8：氏名・電話・メールだけ必須にする例
+    const name = ($('#name')?.value || '').trim();
+    const phone = ($('#phone')?.value || '').trim();
+    const email = ($('#email')?.value || '').trim();
+
+    if(!name || !phone || !email){
+      alert('氏名・電話番号・メールアドレスは必須です。');
+      return false;
+    }
+  }
+
+  if(index === 6){
+    if(agree && !agree.checked){
+      alert('同意が必要です');
+      return false;
+    }
+  }
+  return true;
+}
+
+function next(){
+  if(!validateStep(cur)) return;
   if(cur < 7){
     cur++;
     updateUI();
-    window.scrollTo({top:0, behavior:'smooth'});
   }
 }
 function back(){
   if(cur > 0){
     cur--;
     updateUI();
-    window.scrollTo({top:0, behavior:'smooth'});
   }
 }
 
-/* 「戻る」「次へ」ボタンは（あなたの元UIに合わせて）画面内に置いてないので
-   ここではスワイプ/外付け無し。必要なら、各STEP下にボタン追加して next()/back() を呼ぶだけでOK。
+/* ========= 「次へ」「戻る」ボタンを“自動で拾って”紐づけ =========
+   - 既存HTMLのボタンIDが違っても動く
+   - 無ければ下部に自動生成
 */
+function hookNavButtons(){
+  // 1) まず典型IDを探す
+  let nextBtn =
+    document.getElementById('next') ||
+    document.getElementById('nextBtn') ||
+    document.getElementById('btnNext');
 
-/* ===== 所属区分ボタン ===== */
-document.querySelectorAll('.segBtn').forEach(btn=>{
+  let backBtn =
+    document.getElementById('back') ||
+    document.getElementById('backBtn') ||
+    document.getElementById('btnBack');
+
+  // 2) 見た目/文言から探す（「次へ」「戻る」）
+  if(!nextBtn){
+    nextBtn = $all('button, a').find(el => (el.textContent || '').trim() === '次へ');
+  }
+  if(!backBtn){
+    backBtn = $all('button, a').find(el => (el.textContent || '').trim() === '戻る');
+  }
+
+  // 3) それでも無ければ自動生成（下部固定）
+  if(!nextBtn || !backBtn){
+    let nav = document.createElement('div');
+    nav.className = 'nav';
+    nav.style.position = 'sticky';
+    nav.style.bottom = '0';
+    nav.style.background = 'transparent';
+    nav.style.paddingBottom = '8px';
+
+    const b1 = document.createElement('button');
+    b1.type = 'button';
+    b1.className = 'btnGhost';
+    b1.textContent = '戻る';
+
+    const b2 = document.createElement('button');
+    b2.type = 'button';
+    b2.className = 'btnPrimary';
+    b2.textContent = '次へ';
+
+    nav.appendChild(b1);
+    nav.appendChild(b2);
+
+    // cardの最後に追加
+    const card = $('.card');
+    if(card) card.appendChild(nav);
+
+    backBtn = backBtn || b1;
+    nextBtn = nextBtn || b2;
+  }
+
+  // DONE(8/8)は next/back を押さない設計なら、DONEでは非表示にする
+  const toggle = ()=>{
+    const onDone = (cur === 7);
+    if(backBtn) backBtn.style.display = onDone ? 'none' : '';
+    if(nextBtn) nextBtn.style.display = onDone ? 'none' : '';
+  };
+
+  // クリック紐づけ（既存イベントがあっても上書きで確実に動かす）
+  if(nextBtn){
+    nextBtn.onclick = (e)=>{ e.preventDefault(); next(); toggle(); };
+  }
+  if(backBtn){
+    backBtn.onclick = (e)=>{ e.preventDefault(); back(); toggle(); };
+  }
+
+  toggle();
+}
+
+/* ========= 所属区分ボタン ========= */
+$all('.segBtn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.segBtn').forEach(b=>b.classList.remove('active'));
+    $all('.segBtn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('aff').value = btn.dataset.val;
+    const aff = document.getElementById('aff');
+    if(aff) aff.value = btn.dataset.val;
   });
 });
 
-/* ===== 画像プレビュー ===== */
+/* ========= 画像プレビュー ========= */
 function bindPreview(fileInputId, imgId){
   const inp = document.getElementById(fileInputId);
   const img = document.getElementById(imgId);
+  if(!inp || !img) return;
+
   inp.addEventListener('change', ()=>{
     const f = inp.files && inp.files[0];
     if(!f){
@@ -107,9 +197,30 @@ function bindPreview(fileInputId, imgId){
 bindPreview('licF','prevF');
 bindPreview('licB','prevB');
 
-/* ===== PDF用データ反映（PDFには「所属区分」は出さない方針） ===== */
+/* ========= DONEの3ボタン（LINE / PDF / 共有印刷） ========= */
+const lineBtn = document.getElementById('lineBtn');
+if(lineBtn) lineBtn.href = LINE_URL;
+
+const pdfBtn = document.getElementById('pdfBtn');
+const shareBtn = document.getElementById('shareBtn');
+
+function val(id){
+  const el = document.getElementById(id);
+  if(!el) return '';
+  return (el.value || '').trim();
+}
+function escapeHtml(s){
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+
 function buildPdfGrid(){
   const grid = document.getElementById('pdfGrid');
+  if(!grid) return;
   grid.innerHTML = '';
 
   const items = [
@@ -119,8 +230,6 @@ function buildPdfGrid(){
     ["メール", val('email')],
     ["生年月日", val('dob')],
     ["住所", `${val('zip')} ${val('pref')}${val('city')}${val('addr1')}${val('addr2')}`.trim()],
-    // ★所属区分をPDFに出さない：要望通り
-    // ["所属区分", val('aff')],
     ["所属会社名（任意）", val('affCompany')],
     ["車種", val('carType')],
     ["車両ナンバー", val('carNo')],
@@ -142,21 +251,7 @@ function buildPdfGrid(){
     grid.appendChild(box);
   });
 }
-function val(id){
-  const el = document.getElementById(id);
-  if(!el) return '';
-  return (el.value || '').trim();
-}
-function escapeHtml(s){
-  return String(s)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'","&#39;");
-}
 
-/* ===== 画像をDataURLにしてPDFに載せる ===== */
 function fileToDataURL(file){
   return new Promise((resolve)=>{
     if(!file) return resolve('');
@@ -167,66 +262,56 @@ function fileToDataURL(file){
   });
 }
 
-/* ===== HTML→Canvas→PDF（A4途切れない、端末差が出にくい） ===== */
 async function createPdfBlob(){
-  // 必須チェック（最低限）
-  const licFront = document.getElementById('licF').files?.[0];
+  const licFront = document.getElementById('licF')?.files?.[0];
   if(!licFront){
     alert('免許証 表面（必須）をアップロードしてください。');
     return null;
   }
 
-  // PDFに反映
   buildPdfGrid();
 
-  // 日時
   const now = new Date();
   const pad = (n)=> String(n).padStart(2,'0');
   const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-  document.getElementById('pdfDate').textContent =
-    `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  // 画像セット
-  const licBack = document.getElementById('licB').files?.[0];
-  document.getElementById('pdfImgF').src = await fileToDataURL(licFront);
-  document.getElementById('pdfImgB').src = await fileToDataURL(licBack);
+  const pdfDate = document.getElementById('pdfDate');
+  if(pdfDate){
+    pdfDate.textContent = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
 
-  // 少し待つ（画像反映）
+  const licBack = document.getElementById('licB')?.files?.[0];
+  const pdfImgF = document.getElementById('pdfImgF');
+  const pdfImgB = document.getElementById('pdfImgB');
+
+  if(pdfImgF) pdfImgF.src = await fileToDataURL(licFront);
+  if(pdfImgB) pdfImgB.src = await fileToDataURL(licBack);
+
   await new Promise(r=>setTimeout(r, 120));
 
   const paper = document.getElementById('pdfPaper');
+  if(!paper){
+    alert('PDFテンプレートが見つかりません（pdfPaper）。');
+    return null;
+  }
 
-  // canvas生成
-  const canvas = await html2canvas(paper, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff'
-  });
-
+  const canvas = await html2canvas(paper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
   const imgData = canvas.toDataURL('image/jpeg', 0.92);
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
 
-  // A4サイズ（mm）
-  const pageW = 210;
-  const pageH = 297;
-
-  // 画像をA4にフィット
+  const pageW = 210, pageH = 297;
   const imgW = pageW;
   const imgH = (canvas.height * imgW) / canvas.width;
 
-  let y = 0;
   let remain = imgH;
-
-  // 1ページ目
-  pdf.addImage(imgData, 'JPEG', 0, y, imgW, imgH, '', 'FAST');
+  pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, '', 'FAST');
   remain -= pageH;
 
-  // 2ページ目以降（もし縦が長い場合）
   while(remain > 0){
     pdf.addPage();
-    y = remain - imgH; // 画像全体を上にずらして、次の範囲を見せる
+    const y = remain - imgH;
     pdf.addImage(imgData, 'JPEG', 0, y, imgW, imgH, '', 'FAST');
     remain -= pageH;
   }
@@ -234,22 +319,17 @@ async function createPdfBlob(){
   const fileName = `OFA_driver_entry_${stamp}.pdf`;
   state.pdfFileName = fileName;
 
-  // blob生成
   const blob = pdf.output('blob');
   state.pdfBlob = blob;
-
   return blob;
 }
 
-/* ===== PDFを“開く/保存”（ブラウザ標準で共有/印刷へ行ける） ===== */
 function openPdfBlob(blob){
   const url = URL.createObjectURL(blob);
-  // 新しいタブで開く → Safari/Chromeの共有/印刷導線が使える
   window.open(url, '_blank');
   setTimeout(()=> URL.revokeObjectURL(url), 60_000);
 }
 
-/* ===== Web Share（対応端末ならファイル共有） ===== */
 async function sharePdf(blob){
   const fileName = state.pdfFileName || 'OFA_driver_entry.pdf';
   const file = new File([blob], fileName, { type: 'application/pdf' });
@@ -265,22 +345,17 @@ async function sharePdf(blob){
   return false;
 }
 
-/* ===== DONE: ボタン動作 ===== */
 pdfBtn?.addEventListener('click', async ()=>{
   try{
     pdfBtn.disabled = true;
     pdfBtn.textContent = '作成中...';
-
     const blob = await createPdfBlob();
     if(!blob) return;
-
-    // まず開いて保存できる状態へ
     openPdfBlob(blob);
     showToast('PDFを作成しました。');
-
   }catch(e){
     console.error(e);
-    alert('PDF作成に失敗しました。Safari/Chromeで開いて再度お試しください。');
+    alert('PDF作成に失敗しました。Safari/Chromeで再度お試しください。');
   }finally{
     pdfBtn.disabled = false;
     pdfBtn.textContent = 'PDF作成';
@@ -289,7 +364,6 @@ pdfBtn?.addEventListener('click', async ()=>{
 
 shareBtn?.addEventListener('click', async ()=>{
   try{
-    // まだPDFが無ければ生成してから共有/印刷
     let blob = state.pdfBlob;
     if(!blob){
       shareBtn.disabled = true;
@@ -297,18 +371,13 @@ shareBtn?.addEventListener('click', async ()=>{
       blob = await createPdfBlob();
       if(!blob) return;
     }
-
-    // 共有できる端末 → 共有シート
     const shared = await sharePdf(blob);
     if(shared){
       showToast('共有を開きました。');
       return;
     }
-
-    // 共有未対応 → PDFを開いて、ブラウザの共有/印刷を使う
     openPdfBlob(blob);
     showToast('PDFを開きました。共有/印刷してください。');
-
   }catch(e){
     console.error(e);
     alert('共有/印刷の準備に失敗しました。');
@@ -318,8 +387,6 @@ shareBtn?.addEventListener('click', async ()=>{
   }
 });
 
-/* ===== ここ重要：画面遷移の操作方法 =====
-   あなたの前の実装に「次へ/戻る」ボタンがある想定なら、
-   そのボタンの onclick で next()/back() を呼んでください。
-   （例：document.getElementById('nextBtn').onclick = next;）
-*/
+/* ========= 起動 ========= */
+hookNavButtons();
+updateUI();
