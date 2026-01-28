@@ -1,134 +1,25 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
-  background: linear-gradient(180deg, #fff3e8, #ffffff);
-  color: #1f2328;
+const steps = document.querySelectorAll(".step");
+let current = 1;
+
+const barFill = document.getElementById("barFill");
+const stepText = document.getElementById("stepText");
+
+function setStep(n) {
+  current = n;
+  steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === n));
+  barFill.style.width = `${(n - 1) / (steps.length - 1) * 100}%`;
 }
 
-.appShell {
-  max-width: 480px;
-  margin: auto;
-  padding: 16px;
-}
+document.getElementById("nextBtn").onclick = () => {
+  if (current === 7 && !document.getElementById("agree").checked) {
+    alert("規約に同意してください");
+    return;
+  }
+  if (current < steps.length) setStep(current + 1);
+};
 
-.appHeader {
-  margin-bottom: 16px;
-}
+document.getElementById("backBtn").onclick = () => {
+  if (current > 1) setStep(current - 1);
+};
 
-.appBrand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.appLogo {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #ff7a00, #ffb000);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
-
-.appTitle {
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.appSub {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.progressBar {
-  height: 6px;
-  background: #eee;
-  border-radius: 99px;
-  margin-top: 10px;
-}
-
-#barFill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #ff7a00, #ffb000);
-  border-radius: 99px;
-}
-
-.step {
-  display: none;
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.step.active {
-  display: block;
-}
-
-input, select {
-  width: 100%;
-  margin: 8px 0;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-}
-
-.primaryBtn {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #ff7a00, #ffb000);
-  border: none;
-  border-radius: 14px;
-  font-weight: 900;
-}
-
-.lineBtn {
-  display: block;
-  margin-top: 12px;
-  text-align: center;
-  background: #06c755;
-  color: #fff;
-  padding: 14px;
-  border-radius: 14px;
-  text-decoration: none;
-}
-
-.seg {
-  display: flex;
-  gap: 8px;
-}
-
-.segBtn {
-  flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-}
-
-.segBtn.active {
-  border-color: #ff7a00;
-}
-
-.termsBox {
-  font-size: 12px;
-  line-height: 1.6;
-  border: 1px solid #ddd;
-  padding: 12px;
-  border-radius: 12px;
-  background: #fafafa;
-}
-
-.agree {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.appNav {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
+setStep(1);
