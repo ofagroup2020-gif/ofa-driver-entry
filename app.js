@@ -1,104 +1,155 @@
-import { jsPDF } from "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.es.min.js";
+// ★ここをRenderのAPI URLに変更（末尾/api/pdfまで）
+const API_PDF_URL = "https://YOUR-RENDER-URL.onrender.com/api/pdf";
 
-/* ===== フォント読み込み ===== */
-async function loadFont(doc) {
-  const font = await fetch("./fonts/NotoSansJP-Regular.ttf").then(r => r.arrayBuffer());
-  doc.addFileToVFS("NotoSansJP-Regular.ttf", btoa(
-    new Uint8Array(font).reduce((d,b)=>d+String.fromCharCode(b),'')
-  ));
-  doc.addFont("NotoSansJP-Regular.ttf", "NotoSansJP", "normal");
-  doc.setFont("NotoSansJP");
+// LINE公式（いまのリンクでOK）
+const LINE_OA_URL = "https://lin.ee/Ev7r84H5";
+
+const steps = [...document.querySelectorAll(".step")];
+const barFill = document.getElementById("barFill");
+const stepText = document.getElementById("stepText");
+const nextBtn = document.getElementById("nextBtn");
+const backBtn = document.getElementById("backBtn");
+const toast = document.getElementById("toast");
+
+const makePdfBtn = document.getElementById("makePdfBtn");
+const lineBtn = document.querySelector(".lineBtn");
+
+let current = 1;
+let licFrontFile = null;
+let licBackFile = null;
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1700);
 }
 
-/* ===== 画像をbase64に ===== */
-function fileToDataURL(file) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result);
-    reader.readAsDataURL(file);
+function setStep(n){
+  current = n;
+  steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === current));
+  const pct = ((current - 1) / (steps.length - 1)) * 100;
+  barFill.style.width = `${pct}%`;
+  stepText.textContent = `STEP ${current} / ${steps.length}`;
+  backBtn.style.visibility = current === 1 ? "hidden" : "visible";
+  nextBtn.style.display = current === steps.length ? "none" : "inline-block";
+  document.querySelector(".nav").style.display = current === steps.length ? "none" : "flex";
+}
+
+function val(id){ return document.getElementById(id)?.value?.trim() || ""; }
+
+function validateStep(n){
+  if(n===1){
+    if(!val("name") || !val("kana") || !val("phone") || !val("email") || !val("birth")) return "基本情報を入力してください";
+  }
+  if(n===2){
+    if(!val("zip") || !val("pref") || !val("city") || !val("addr1")) return "住所を入力してください";
+  }
+  if(n===3){
+    if(!val("affType")) return "所属区分を選択してください";
+  }
+  if(n===4){
+    if(!val("vehicleType") || !val("plate") || !val("blackPlate")) return "車両情報を入力してください";
+  }
+  if(n===5){
+    if(!licFrontFile) return "免許証（表面）をアップロードしてください";
+  }
+  if(n===6){
+    if(!val("bank") || !val("branch") || !val("acctType") || !val("acctNo") || !val("acctName")) return "振込先を入力してください";
+  }
+  if(n===7){
+    const agree = document.getElementById("agree");
+    if(agree && !agree.checked) return "規約に同意してください";
+  }
+  return "";
+}
+
+nextBtn?.addEventListener("click", ()=>{
+  const msg = validateStep(current);
+  if(msg){ showToast(msg); return; }
+  setStep(current + 1);
+});
+backBtn?.addEventListener("click", ()=> setStep(Math.max(1, current - 1)));
+
+document.querySelectorAll(".segBtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("affType").value = btn.dataset.value;
   });
+});
+
+document.getElementById("licFront")?.addEventListener("change", (e)=>{
+  licFrontFile = e.target.files?.[0] || null;
+});
+document.getElementById("licBack")?.addEventListener("change", (e)=>{
+  licBackFile = e.target.files?.[0] || null;
+});
+
+function collectData(){
+  return {
+    name: val("name"),
+    kana: val("kana"),
+    phone: val("phone"),
+    email: val("email"),
+    birth: val("birth"),
+    zip: val("zip"),
+    pref: val("pref"),
+    city: val("city"),
+    addr1: val("addr1"),
+    addr2: val("addr2"),
+    affType: val("affType"),
+    company: val("company"),
+    vehicleType: val("vehicleType"),
+    plate: val("plate"),
+    blackPlate: val("blackPlate"),
+    bank: val("bank"),
+    branch: val("branch"),
+    acctType: val("acctType"),
+    acctNo: val("acctNo"),
+    acctName: val("acctName")
+  };
 }
 
-/* ===== PDF生成 ===== */
-document.getElementById("makePdf").onclick = async () => {
-
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  await loadFont(doc);
-
-  let y = 15;
-
-  const line = (label, value) => {
-    doc.setFontSize(10);
-    doc.text(label, 15, y);
-    doc.setFontSize(11);
-    doc.text(value || "―", 60, y);
-    y += 7;
-  };
-
-  /* タイトル */
-  doc.setFontSize(16);
-  doc.text("OFA GROUP ドライバー登録シート", 15, y);
-  y += 10;
-
-  /* 基本情報 */
-  doc.setFontSize(13);
-  doc.text("■ ドライバー基本情報", 15, y); y += 8;
-
-  line("氏名", document.getElementById("name").value);
-  line("フリガナ", document.getElementById("kana").value);
-  line("電話番号", document.getElementById("phone").value);
-  line("メール", document.getElementById("email").value);
-  line("生年月日", document.getElementById("birth").value);
-
-  y += 5;
-  doc.text("■ 住所", 15, y); y += 8;
-
-  line("郵便番号", document.getElementById("zip").value);
-  line("都道府県", document.getElementById("pref").value);
-  line("市区町村", document.getElementById("city").value);
-  line("番地", document.getElementById("addr1").value);
-  line("建物名", document.getElementById("addr2").value);
-
-  y += 5;
-  doc.text("■ 車両情報", 15, y); y += 8;
-
-  line("車種", document.getElementById("vehicleType").value);
-  line("ナンバー", document.getElementById("plate").value);
-  line("黒ナンバー", document.getElementById("blackPlate").value);
-
-  y += 5;
-  doc.text("■ 振込先", 15, y); y += 8;
-
-  line("銀行名", document.getElementById("bank").value);
-  line("支店名", document.getElementById("branch").value);
-  line("口座種別", document.getElementById("acctType").value);
-  line("口座番号", document.getElementById("acctNo").value);
-  line("口座名義", document.getElementById("acctName").value);
-
-  /* 写真ページ */
-  const front = document.getElementById("licFront").files[0];
-  const back  = document.getElementById("licBack").files[0];
-
-  if (front || back) {
-    doc.addPage();
-    doc.setFontSize(13);
-    doc.text("■ 運転免許証", 15, 15);
-
-    let iy = 25;
-
-    if (front) {
-      const img = await fileToDataURL(front);
-      doc.text("表面", 15, iy);
-      doc.addImage(img, "JPEG", 15, iy + 5, 80, 50);
-    }
-
-    if (back) {
-      const img = await fileToDataURL(back);
-      doc.text("裏面", 110, iy);
-      doc.addImage(img, "JPEG", 110, iy + 5, 80, 50);
-    }
+async function makePdfByApi(){
+  // 全チェック（1〜7）
+  for(let i=1;i<=7;i++){
+    const msg = validateStep(i);
+    if(msg){ setStep(i); showToast(msg); return; }
   }
 
-  /* 保存 */
-  doc.save("OFA_Driver_Entry.pdf");
-};
+  showToast("PDF作成中…");
+
+  const data = collectData();
+  const fd = new FormData();
+  fd.append("data", JSON.stringify(data));
+  fd.append("licFront", licFrontFile);
+  if(licBackFile) fd.append("licBack", licBackFile);
+
+  const res = await fetch(API_PDF_URL, { method: "POST", body: fd });
+  if(!res.ok){
+    const t = await res.text().catch(()=> "");
+    console.error(t);
+    showToast("PDF作成に失敗しました（API設定を確認）");
+    return;
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+
+  // ダウンロード
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "OFA_登録.pdf";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+
+  showToast("PDFを保存しました。LINE公式へ送ってください");
+  setStep(8);
+}
+
+makePdfBtn?.addEventListener("click", makePdfByApi);
+if(lineBtn) lineBtn.href = LINE_OA_URL;
+
+setStep(1);
