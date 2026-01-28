@@ -1,372 +1,371 @@
-(() => {
-  const steps = Array.from(document.querySelectorAll('.step'));
-  const TOTAL = steps.length; // 8
-  const stepNowEl = document.getElementById('stepNow');
-  const stepTotalEl = document.getElementById('stepTotal');
-  const barFill = document.getElementById('barFill');
-  const dotsWrap = document.getElementById('dots');
-  const toast = document.getElementById('toast');
+/* =========================
+   CONFIG
+========================= */
+const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/8x437Vt";
 
-  stepTotalEl.textContent = String(TOTAL);
+/* =========================
+   ELEMENTS
+========================= */
+const steps = Array.from(document.querySelectorAll(".step"));
+let cur = 0;
 
-  // ====== dots生成 ======
-  const dots = [];
-  for (let i = 0; i < TOTAL; i++) {
-    const d = document.createElement('div');
-    d.className = 'd';
-    dotsWrap.appendChild(d);
-    dots.push(d);
+const stepNo = document.getElementById("stepNo");
+const bar = document.getElementById("bar");
+const dots = document.getElementById("dots");
+const toast = document.getElementById("toast");
+
+const $ = (id) => document.getElementById(id);
+
+/* inputs */
+const name = $("name");
+const kana = $("kana");
+const phone = $("phone");
+const email = $("email");
+const birth = $("birth");
+
+const zip = $("zip");
+const pref = $("pref");
+const city = $("city");
+const addr1 = $("addr1");
+const addr2 = $("addr2");
+
+const aff = $("aff");
+const company = $("company");
+
+const carType = $("carType");
+const carNo = $("carNo");
+const black = $("black");
+
+const bank = $("bank");
+const branch = $("branch");
+const acctType = $("acctType");
+const acctNo = $("acctNo");
+const acctName = $("acctName");
+
+const licF = $("licF");
+const licB = $("licB");
+const prevF = $("prevF");
+const prevB = $("prevB");
+
+const agree = $("agree");
+
+/* done */
+const lineBtn = $("lineBtn");
+const pdfBtn = $("pdfBtn");
+const restartBtn = $("restartBtn");
+const finishBtn = $("finishBtn");
+
+/* pdf paper */
+const pdfPaper = $("pdfPaper");
+const pdfGrid = $("pdfGrid");
+const pdfDate = $("pdfDate");
+const pdfImgF = $("pdfImgF");
+const pdfImgB = $("pdfImgB");
+
+/* =========================
+   INIT UI
+========================= */
+function buildDots(){
+  dots.innerHTML = "";
+  for(let i=0;i<8;i++){
+    const d = document.createElement("div");
+    d.className = "d" + (i===0 ? " on" : "");
+    dots.appendChild(d);
   }
+}
+buildDots();
 
-  let cur = 0; // 0-based
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1200);
+}
 
-  function showToast(msg){
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 1500);
+function show(){
+  steps.forEach(s => s.classList.remove("active"));
+  steps[cur].classList.add("active");
+
+  stepNo.textContent = String(cur + 1);
+  bar.style.width = ((cur+1)/8*100) + "%";
+
+  const ds = Array.from(dots.children);
+  ds.forEach((d,i)=> d.classList.toggle("on", i===cur));
+}
+
+/* =========================
+   VALIDATION
+========================= */
+function val(v){ return (v || "").toString().trim(); }
+
+function requireStep(stepIndex){
+  // stepIndex: 0-based
+  if(stepIndex === 0){
+    if(!val(name.value)) return "氏名を入力してください";
+    if(!val(kana.value)) return "フリガナを入力してください";
+    if(!val(phone.value)) return "電話番号を入力してください";
+    if(!val(email.value)) return "メールアドレスを入力してください";
+    if(!val(birth.value)) return "生年月日を入力してください";
   }
-
-  function setActive(index){
-    cur = Math.max(0, Math.min(TOTAL - 1, index));
-    steps.forEach(s => s.classList.remove('active'));
-    steps[cur].classList.add('active');
-
-    // step表示
-    stepNowEl.textContent = String(cur + 1);
-
-    // progress bar
-    const pct = ((cur + 1) / TOTAL) * 100;
-    barFill.style.width = pct + '%';
-
-    // dots
-    dots.forEach((d, i) => d.classList.toggle('on', i === cur));
-
-    // 先頭STEPで「戻る」を無効にしたい場合はここでやる（今回は押しても変化なしにする）
+  if(stepIndex === 1){
+    if(!val(zip.value)) return "郵便番号を入力してください";
+    if(!val(pref.value)) return "都道府県を入力してください";
+    if(!val(city.value)) return "市区町村を入力してください";
+    if(!val(addr1.value)) return "番地を入力してください";
   }
-
-  // ====== 入力取得 ======
-  const $ = (id) => document.getElementById(id);
-
-  const name = $('name');
-  const kana = $('kana');
-  const phone = $('phone');
-  const email = $('email');
-  const dob = $('dob');
-
-  const zip = $('zip');
-  const pref = $('pref');
-  const city = $('city');
-  const addr1 = $('addr1');
-  const addr2 = $('addr2');
-
-  const aff = $('aff'); // hidden
-  const company = $('company');
-
-  const carType = $('carType');
-  const carNo = $('carNo');
-  const blackNo = $('blackNo');
-
-  const bankName = $('bankName');
-  const bankBranch = $('bankBranch');
-  const bankType = $('bankType');
-  const bankNo = $('bankNo');
-  const bankKana = $('bankKana');
-
-  const licF = $('licF');
-  const licB = $('licB');
-  const prevF = $('prevF');
-  const prevB = $('prevB');
-
-  // ====== プレビュー ======
-  function previewFile(fileInput, imgEl){
-    const f = fileInput.files && fileInput.files[0];
-    if (!f) {
-      imgEl.style.display = 'none';
-      imgEl.src = '';
-      return;
-    }
-    const url = URL.createObjectURL(f);
-    imgEl.src = url;
-    imgEl.style.display = 'block';
+  if(stepIndex === 2){
+    if(!val(aff.value)) return "所属区分を選択してください";
   }
-  licF.addEventListener('change', () => previewFile(licF, prevF));
-  licB.addEventListener('change', () => previewFile(licB, prevB));
+  if(stepIndex === 3){
+    if(!val(carType.value)) return "車種を選択してください";
+    if(!val(carNo.value)) return "車両ナンバーを入力してください";
+    if(!val(black.value)) return "黒ナンバーを選択してください";
+  }
+  if(stepIndex === 4){
+    if(!val(bank.value)) return "銀行を入力してください";
+    if(!val(branch.value)) return "支店を入力してください";
+    if(!val(acctType.value)) return "口座種別を選択してください";
+    if(!val(acctNo.value)) return "口座番号を入力してください";
+    if(!val(acctName.value)) return "口座名義（カナ）を入力してください";
+  }
+  if(stepIndex === 5){
+    if(!licF.files || !licF.files[0]) return "免許証（表面）の画像をアップロードしてください";
+  }
+  if(stepIndex === 6){
+    if(!agree.checked) return "同意が必要です";
+  }
+  return "";
+}
 
-  // ====== 所属ボタン ======
-  document.querySelectorAll('.segBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.segBtn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      aff.value = btn.dataset.aff || '';
-    });
+/* =========================
+   NAV BUTTONS
+========================= */
+function goNext(){
+  const err = requireStep(cur);
+  if(err){
+    alert(err);
+    return;
+  }
+  if(cur < 7){
+    cur++;
+    show();
+  }
+}
+function goBack(){
+  if(cur > 0){
+    cur--;
+    show();
+  }
+}
+
+for(let i=1;i<=8;i++){
+  const b = $("back"+i);
+  if(b) b.addEventListener("click", goBack);
+  const n = $("next"+i);
+  if(n) n.addEventListener("click", goNext);
+}
+
+/* =========================
+   AFF BUTTONS
+========================= */
+document.querySelectorAll(".segBtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    aff.value = btn.dataset.val || "";
   });
+});
 
-  // ====== 必須チェック（最小限） ======
-  function requireFilled(list){
-    for (const el of list){
-      if (!el) continue;
-      const v = (el.value || '').trim();
-      if (!v) return false;
-    }
-    return true;
+/* =========================
+   PREVIEW
+========================= */
+function setPreview(file, imgEl){
+  if(!file){
+    imgEl.style.display = "none";
+    imgEl.src = "";
+    return;
   }
+  const url = URL.createObjectURL(file);
+  imgEl.src = url;
+  imgEl.style.display = "block";
+}
 
-  function canGoNext(){
-    // stepごとの最低限チェック（厳しくしすぎない）
-    const stepNo = cur + 1;
+licF.addEventListener("change", ()=> setPreview(licF.files[0], prevF));
+licB.addEventListener("change", ()=> setPreview(licB.files[0], prevB));
 
-    if (stepNo === 1) {
-      return requireFilled([name, kana, phone, email, dob]);
-    }
-    if (stepNo === 2) {
-      return requireFilled([zip, pref, city, addr1]);
-    }
-    if (stepNo === 3) {
-      // 所属は必須（ボタン）
-      return (aff.value || '').trim().length > 0;
-    }
-    if (stepNo === 4) {
-      return requireFilled([carType, carNo, blackNo]);
-    }
-    if (stepNo === 5) {
-      return requireFilled([bankName, bankBranch, bankType, bankNo, bankKana]);
-    }
-    if (stepNo === 6) {
-      // 表面は必須
-      return !!(licF.files && licF.files[0]);
-    }
-    if (stepNo === 7) {
-      // 同意必須
-      return $('agree').checked;
-    }
-    return true;
-  }
+/* =========================
+   DONE ACTIONS
+========================= */
+lineBtn.href = OFA_MEMBERSHIP_LINE_URL;
 
-  function next(){
-    if (!canGoNext()){
-      showToast('未入力があります');
-      return;
-    }
-    setActive(cur + 1);
-  }
+/* PDF: “開く”＝Safari/Chromeの共有/印刷導線がそのまま使える */
+async function makePdfAndOpen(){
+  try{
+    pdfBtn.disabled = true;
+    pdfBtn.textContent = "PDF作成中…";
 
-  function back(){
-    setActive(cur - 1);
-  }
+    // PDF用の内容を組み立て
+    pdfDate.textContent = new Date().toLocaleString("ja-JP");
 
-  // ====== ナビボタン（ID固定） ======
-  const bindNav = (id, fn) => {
-    const el = $(id);
-    if (el) el.addEventListener('click', fn);
-  };
+    const items = [
+      ["氏名（漢字）", val(name.value)],
+      ["フリガナ", val(kana.value)],
+      ["電話番号", val(phone.value)],
+      ["メール", val(email.value)],
+      ["生年月日", val(birth.value)],
+      ["住所", `${val(zip.value)} ${val(pref.value)}${val(city.value)}${val(addr1.value)} ${val(addr2.value)}`.trim()],
+      ["所属区分", val(aff.value)],
+      ["所属会社名（任意）", val(company.value)],
+      ["車種", val(carType.value)],
+      ["車両ナンバー", val(carNo.value)],
+      ["黒ナンバー", val(black.value)],
+      ["銀行", val(bank.value)],
+      ["支店", val(branch.value)],
+      ["口座種別", val(acctType.value)],
+      ["口座番号", val(acctNo.value)],
+      ["口座名義（カナ）", val(acctName.value)]
+    ];
 
-  // step1
-  bindNav('backBtn', back);
-  bindNav('nextBtn', next);
+    pdfGrid.innerHTML = items.map(([k,v])=>`
+      <div class="pdfItem">
+        <div class="pdfLabel">${k}</div>
+        <div class="pdfValue">${(v || "").replaceAll("<","&lt;").replaceAll(">","&gt;")}</div>
+      </div>
+    `).join("");
 
-  // step2
-  bindNav('backBtn2', back);
-  bindNav('nextBtn2', next);
+    // 画像はobject-fit:coverで上下余白を自動カット（PDF側CSSで設定済み）
+    if(licF.files[0]) pdfImgF.src = URL.createObjectURL(licF.files[0]);
+    else pdfImgF.removeAttribute("src");
 
-  // step3
-  bindNav('backBtn3', back);
-  bindNav('nextBtn3', next);
+    if(licB.files[0]) pdfImgB.src = URL.createObjectURL(licB.files[0]);
+    else pdfImgB.removeAttribute("src");
 
-  // step4
-  bindNav('backBtn4', back);
-  bindNav('nextBtn4', next);
+    // 画像の読み込み待ち
+    await waitImagesLoaded([pdfImgF, pdfImgB]);
 
-  // step5
-  bindNav('backBtn5', back);
-  bindNav('nextBtn5', next);
-
-  // step6
-  bindNav('backBtn6', back);
-  bindNav('nextBtn6', next);
-
-  // step7
-  bindNav('backBtn7', back);
-  bindNav('nextBtn7', next);
-
-  // step8
-  bindNav('backBtn8', back);
-  bindNav('restartBtn', () => setActive(0));
-
-  // ====== STEP8 ボタン（導線：LINE → PDF） ======
-  // ★ここにあなたの「OFAメンバーシップLINE」友だち追加URLを入れる
-  // 例）https://lin.ee/xxxxx  または  https://line.me/R/ti/p/@xxxxx
-  const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/xxxxx"; // ←必ず差し替え
-
-  $('lineBtn').addEventListener('click', () => {
-    // iPhoneのin-appブラウザだと詰まるので、まず普通に開く
-    window.open(OFA_MEMBERSHIP_LINE_URL, '_blank');
-    showToast('LINEを追加/開きました');
-  });
-
-  $('howToBtn').addEventListener('click', () => {
-    alert(
-`【送信手順】
-1) 先に「OFAメンバーシップLINE」を追加/開く
-2) 「登録PDF作成」を押してPDFを開く/保存
-3) 共有ボタン → LINE → 「OFAメンバーシップLINE」へ送信
-※ 印刷は共有 → 印刷でOK`
-    );
-  });
-
-  // ====== PDF作成（html2canvas → jsPDF） ======
-  const pdfPaper = $('pdfPaper');
-  const pdfGrid = $('pdfGrid');
-  const pdfDate = $('pdfDate');
-  const pdfImgF = $('pdfImgF');
-  const pdfImgB = $('pdfImgB');
-
-  function nowString(){
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2,'0');
-    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  function pdfItem(label, value){
-    const div = document.createElement('div');
-    div.className = 'pdfItem';
-    div.innerHTML = `<div class="pdfLabel">${label}</div><div class="pdfValue">${escapeHtml(value || '')}</div>`;
-    return div;
-  }
-
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'","&#039;");
-  }
-
-  async function fileToDataURL(file){
-    if (!file) return '';
-    return new Promise((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.readAsDataURL(file);
-    });
-  }
-
-  function buildPdfPaper(){
-    pdfDate.textContent = nowString();
-    pdfGrid.innerHTML = '';
-
-    pdfGrid.appendChild(pdfItem('氏名（漢字）', name.value));
-    pdfGrid.appendChild(pdfItem('フリガナ', kana.value));
-    pdfGrid.appendChild(pdfItem('電話番号', phone.value));
-    pdfGrid.appendChild(pdfItem('メール', email.value));
-
-    pdfGrid.appendChild(pdfItem('生年月日', dob.value));
-
-    const fullAddr = `${zip.value} ${pref.value}${city.value}${addr1.value}${addr2.value ? ' ' + addr2.value : ''}`;
-    pdfGrid.appendChild(pdfItem('住所', fullAddr));
-
-    pdfGrid.appendChild(pdfItem('所属区分', aff.value));
-    pdfGrid.appendChild(pdfItem('所属会社名（任意）', company.value));
-
-    pdfGrid.appendChild(pdfItem('車種', carType.value));
-    pdfGrid.appendChild(pdfItem('車両ナンバー', carNo.value));
-    pdfGrid.appendChild(pdfItem('黒ナンバー', blackNo.value));
-
-    pdfGrid.appendChild(pdfItem('銀行', bankName.value));
-    pdfGrid.appendChild(pdfItem('支店', bankBranch.value));
-    pdfGrid.appendChild(pdfItem('口座種別', bankType.value));
-    pdfGrid.appendChild(pdfItem('口座番号', bankNo.value));
-    pdfGrid.appendChild(pdfItem('口座名義（カナ）', bankKana.value));
-  }
-
-  async function createPdf(){
-    // 端末差でPDF出ない問題の回避：Safari/Chrome推奨（コード側は最大限安定化）
-    buildPdfPaper();
-
-    // 画像をPDF用に差し込む（DataURL）
-    const fFront = licF.files && licF.files[0];
-    const fBack  = licB.files && licB.files[0];
-
-    pdfImgF.src = await fileToDataURL(fFront);
-    pdfImgB.src = fBack ? await fileToDataURL(fBack) : '';
-
-    // 画像読み込み待ち
-    await Promise.all([waitImg(pdfImgF), waitImg(pdfImgB)]);
-
-    // canvas化（A4 794px 幅）
+    // html2canvas → jsPDF
     const canvas = await html2canvas(pdfPaper, {
-      scale: 2, // 画質UP
-      backgroundColor: '#ffffff'
+      scale: 2,                // 高精細
+      backgroundColor: "#ffffff",
+      useCORS: true
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF("p","mm","a4");
 
-    // A4(mm) 210 x 297
-    const pageW = 210;
-    const pageH = 297;
-
-    // canvas比率から高さ計算
+    const pageW = 210, pageH = 297;
     const imgW = pageW;
     const imgH = (canvas.height * imgW) / canvas.width;
 
-    // 1ページで収まる前提（収まらない場合は縮める）
-    let drawH = imgH;
-    if (drawH > pageH) drawH = pageH;
-
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgW, drawH, undefined, 'FAST');
+    let y = 0;
+    // 1枚で収まらない時はページ分割
+    if(imgH <= pageH){
+      pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH, "", "FAST");
+    }else{
+      let remaining = imgH;
+      let pos = 0;
+      while(remaining > 0){
+        pdf.addImage(imgData, "JPEG", 0, pos, imgW, imgH, "", "FAST");
+        remaining -= pageH;
+        pos -= pageH;
+        if(remaining > 0) pdf.addPage();
+      }
+    }
 
     const fileName = `OFA_driver_entry_${stamp()}.pdf`;
 
-    // ★iPhoneで「保存/共有/印刷」しやすいように、まず開いてから保存
-    const blob = pdf.output('blob');
-    const url = URL.createObjectURL(blob);
+    // ★重要：iPhoneで「出ない」対策 → blobURLを新規タブで開く
+    const blob = pdf.output("blob");
+    const blobUrl = URL.createObjectURL(blob);
 
-    // 新しいタブでPDFを開く（印刷もここから）
-    window.open(url, '_blank');
-
-    // ついでにダウンロード（Chromeは下に出る）
-    pdf.save(fileName);
-
-    showToast('PDFを作成しました');
-  }
-
-  function waitImg(img){
-    return new Promise((r) => {
-      if (!img || !img.src) return r();
-      if (img.complete) return r();
-      img.onload = () => r();
-      img.onerror = () => r();
-    });
-  }
-
-  function stamp(){
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2,'0');
-    return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
-  }
-
-  $('pdfBtn').addEventListener('click', async () => {
-    try{
-      // LINE導線のため、先にLINE追加を促す（強制はしない）
-      if (!OFA_MEMBERSHIP_LINE_URL || OFA_MEMBERSHIP_LINE_URL.includes('xxxxx')){
-        alert('app.js の OFA_MEMBERSHIP_LINE_URL を本物のURLに差し替えてください。');
-        return;
-      }
-      await createPdf();
-    }catch(e){
-      console.error(e);
-      alert('PDF作成に失敗しました。Safari/Chromeで開き直して再度お試しください。');
+    // 新規タブで開く（Safari/Chromeの共有/印刷が使える）
+    const w = window.open(blobUrl, "_blank");
+    if(!w){
+      // ポップアップブロック等の時は保存
+      pdf.save(fileName);
+      showToast("PDFを保存しました");
+      return;
     }
-  });
 
-  // ====== 初期表示 ======
-  setActive(0);
+    // ついでにダウンロードもできるように（端末によっては必要）
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-  // ====== Service Worker（キャッシュで反映されない対策） ======
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=20260129-2').catch(()=>{});
+    showToast("PDFを作成しました（共有/印刷OK）");
+  }catch(e){
+    console.error(e);
+    alert("PDF作成に失敗しました。Safari/Chromeで開き直して再度お試しください。");
+  }finally{
+    pdfBtn.disabled = false;
+    pdfBtn.textContent = "PDF作成";
   }
-})();
+}
+
+function stamp(){
+  const d = new Date();
+  const pad = (n)=> String(n).padStart(2,"0");
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function waitImagesLoaded(imgEls){
+  return Promise.all(imgEls.map(img=>{
+    return new Promise(res=>{
+      if(!img || !img.getAttribute("src")) return res();
+      if(img.complete) return res();
+      img.onload = ()=>res();
+      img.onerror = ()=>res();
+    });
+  }));
+}
+
+pdfBtn.addEventListener("click", async ()=>{
+  // 完了画面は「LINE→PDF」導線
+  // PDFはいつでも作れるが、LINE未追加だと共有に出ない事があるので案内を強める
+  if(!confirm("先にOFAメンバーシップLINEを追加しましたか？\n（未追加だと共有先にLINEが出ない場合があります）")){
+    // 追加してないならLINEへ
+    window.open(OFA_MEMBERSHIP_LINE_URL, "_blank");
+    return;
+  }
+  await makePdfAndOpen();
+});
+
+restartBtn.addEventListener("click", ()=>{
+  // reset
+  steps.forEach(s=>s.classList.remove("active"));
+  cur = 0;
+
+  // clear inputs
+  [name,kana,phone,email,birth,zip,pref,city,addr1,addr2,company,carNo,bank,branch,acctNo,acctName].forEach(i=> i.value="");
+  carType.value = "";
+  black.value = "";
+  acctType.value = "";
+  aff.value = "";
+  agree.checked = false;
+
+  // seg UI reset
+  document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
+
+  // files reset
+  licF.value = "";
+  licB.value = "";
+  setPreview(null, prevF);
+  setPreview(null, prevB);
+
+  show();
+});
+
+finishBtn.addEventListener("click", ()=>{
+  showToast("完了しました");
+});
+
+/* =========================
+   FIX: “次へ行けない”対策
+   - ボタンは全て type=button
+   - step遷移は goNext/goBack で統一
+========================= */
+
+show();
