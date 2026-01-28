@@ -1,133 +1,111 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OFA GROUP Driver Registration</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OFA GROUP Driver Registration</title>
 
-  <!-- jsPDF -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="./style.css">
 
-  <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body>
 
+<body>
 <header class="top">
   <div class="brand">
-    <div class="logo">OFA</div>
+    <img src="./assets/ofa-logo-192.png" class="logo">
     <div>
-      <div class="title">OFA GROUP</div>
-      <div class="sub">Driver Registration App</div>
+      <b>OFA GROUP</b><br>
+      <small>Driver Registration App</small>
     </div>
   </div>
-  <div class="stepBadge">
-    STEP <span id="stepNo">1</span> / 8
-  </div>
+  <div class="stepChip">STEP <span id="stepNo">1</span> / 8</div>
 </header>
 
-<div class="progress">
-  <div id="bar"></div>
-</div>
+<div class="progress"><div id="bar"></div></div>
 
 <main>
+  <!-- STEP 1 -->
+  <section class="step active">
+    <h2>ドライバー基本情報</h2>
+    <input id="name" placeholder="氏名（漢字）">
+    <input id="kana" placeholder="フリガナ">
+    <input id="phone" placeholder="電話番号">
+    <input id="email" placeholder="メール">
+    <input id="birth" type="date">
+  </section>
 
-<!-- STEP 1 -->
-<section class="step active">
-  <h2>ドライバー基本情報</h2>
-  <input id="name" placeholder="氏名（漢字）">
-  <input id="kana" placeholder="フリガナ">
-  <input id="phone" placeholder="電話番号">
-  <input id="email" placeholder="メール">
-  <input id="birth" type="date">
-</section>
+  <!-- STEP 2 -->
+  <section class="step">
+    <h2>住所情報</h2>
+    <input id="zip" placeholder="郵便番号">
+    <input id="pref" placeholder="都道府県">
+    <input id="city" placeholder="市区町村">
+    <input id="addr1" placeholder="番地">
+    <input id="addr2" placeholder="建物名（任意）">
+  </section>
 
-<!-- STEP 2 -->
-<section class="step">
-  <h2>住所情報</h2>
-  <input id="zip" placeholder="郵便番号">
-  <input id="pref" placeholder="都道府県">
-  <input id="city" placeholder="市区町村">
-  <input id="addr1" placeholder="番地">
-  <input id="addr2" placeholder="建物名（任意）">
-</section>
+  <!-- STEP 3 -->
+  <section class="step">
+    <h2>所属区分</h2>
+    <div class="seg">
+      <button data-val="協力会社">協力会社</button>
+      <button data-val="FC">FC</button>
+      <button data-val="個人">個人</button>
+    </div>
+    <input id="aff" type="hidden">
+    <input id="company" placeholder="所属会社名（任意）">
+  </section>
 
-<!-- STEP 3 -->
-<section class="step">
-  <h2>所属区分</h2>
-  <div class="seg">
-    <button data-val="協力会社">協力会社</button>
-    <button data-val="FC">FC</button>
-    <button data-val="個人">個人</button>
-  </div>
-  <input id="aff" type="hidden">
-  <input id="company" placeholder="所属会社名（任意）">
-</section>
+  <!-- STEP 4 -->
+  <section class="step">
+    <h2>車両情報</h2>
+    <input id="vehicle" placeholder="車種">
+    <input id="plate" placeholder="ナンバー">
+    <input id="black" placeholder="黒ナンバー有無">
+  </section>
 
-<!-- STEP 4 -->
-<section class="step">
-  <h2>車両情報</h2>
-  <input id="vehicle" placeholder="車種">
-  <input id="plate" placeholder="車両ナンバー">
-  <input id="black" placeholder="黒ナンバー（あり／なし）">
-</section>
+  <!-- STEP 5 -->
+  <section class="step">
+    <h2>免許証</h2>
+    <input type="file" id="licF" accept="image/*">
+    <img id="prevF" class="photo">
+    <input type="file" id="licB" accept="image/*">
+    <img id="prevB" class="photo">
+  </section>
 
-<!-- STEP 5 -->
-<section class="step">
-  <h2>運転免許証</h2>
-  <label>表面（必須）</label>
-  <input id="licF" type="file" accept="image/*">
-  <label>裏面（任意）</label>
-  <input id="licB" type="file" accept="image/*">
-</section>
+  <!-- STEP 6 -->
+  <section class="step">
+    <h2>振込先</h2>
+    <input id="bank" placeholder="銀行">
+    <input id="branch" placeholder="支店">
+    <input id="acctNo" placeholder="口座番号">
+    <input id="acctName" placeholder="口座名義">
+  </section>
 
-<!-- STEP 6 -->
-<section class="step">
-  <h2>銀行口座</h2>
-  <input id="bank" placeholder="銀行名">
-  <input id="branch" placeholder="支店名">
-  <input id="type" placeholder="口座種別">
-  <input id="no" placeholder="口座番号">
-  <input id="holder" placeholder="口座名義（カナ）">
-</section>
+  <!-- STEP 7 -->
+  <section class="step">
+    <h2>登録規約</h2>
+    <div class="terms">
+      本登録は本人確認・契約前情報取得を目的とします。
+    </div>
+    <label><input type="checkbox" id="agree"> 同意します</label>
+  </section>
 
-<!-- STEP 7 -->
-<section class="step">
-  <h2>登録規約</h2>
-  <div class="terms">
-    本登録はドライバー本人が行うものとします。<br>
-    虚偽申告があった場合、登録をお断りすることがあります。
-  </div>
-  <label class="agree">
-    <input type="checkbox" id="agree"> 上記内容に同意します
-  </label>
-</section>
-
-<!-- STEP 8 -->
-<section class="step">
-  <h2>登録完了</h2>
-  <p>
-    ① PDFを作成<br>
-    ② OFAメンバーシップLINEへ送信
-  </p>
-
-  <button id="pdfBtn" class="mainBtn">登録PDFを作成（保存・共有・印刷）</button>
-
-  <a class="lineBtn" href="https://lin.ee/Ev7r84H5" target="_blank">
-    OFAメンバーシップLINEを開く
-  </a>
-</section>
-
+  <!-- STEP 8 -->
+  <section class="step">
+    <h2>登録完了</h2>
+    <button id="pdfBtn" class="mainBtn">PDFを保存・共有・印刷</button>
+    <a class="lineBtn" href="https://lin.ee/XXXXX">OFAメンバーシップLINE</a>
+  </section>
 </main>
-
-<footer>
-  © OFA GROUP　One for All, All for One
-</footer>
 
 <div class="nav">
   <button id="back">戻る</button>
   <button id="next">次へ</button>
 </div>
 
-<script src="app.js"></script>
+<script src="./app.js"></script>
 </body>
 </html>
