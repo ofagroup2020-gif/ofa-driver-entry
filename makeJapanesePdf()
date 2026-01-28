@@ -1,0 +1,61 @@
+async function makeJapanesePdf(){
+  const data = collect();
+
+  // PDF用HTMLを作る
+  const pdfSheet = document.getElementById("pdfSheet");
+  pdfSheet.innerHTML = await buildPdfSheetHTML(data);
+
+  // 重要：高さを固定しない（内容に応じて伸びる）
+  const target = pdfSheet.firstElementChild;
+
+  // iOS対策：画像がDOMに反映されるのを少し待つ
+  await new Promise(r => setTimeout(r, 250));
+
+  // canvas化（高さは自動：scrollHeightで取得）
+  const fullHeight = Math.max(target.scrollHeight, target.offsetHeight);
+
+  const canvas = await html2canvas(target, {
+    backgroundColor: "#ffffff",
+    scale: 2,
+    useCORS: true,
+    windowWidth: target.scrollWidth,
+    windowHeight: fullHeight,
+    width: target.scrollWidth,
+    height: fullHeight
+  });
+
+  const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  // A4サイズ
+  const pageW = 210;
+  const pageH = 297;
+
+  // 画像をA4幅に合わせた時の高さ(mm)
+  const imgW = pageW;
+  const imgH = (canvas.height * imgW) / canvas.width;
+
+  let heightLeft = imgH;
+  let position = 0;
+
+  // 1ページ目
+  pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+  heightLeft -= pageH;
+
+  // 2ページ目以降（ここが “途切れない” 本体）
+  while (heightLeft > 0) {
+    position = position - pageH;   // 上へずらして次の範囲を見せる
+    pdf.addPage();
+    pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+    heightLeft -= pageH;
+  }
+
+  const now = new Date();
+  const ymd = now.toISOString().slice(0,10);
+  const fileName = `OFA_登録_${data.name || "driver"}_${ymd}.pdf`;
+
+  pdf.save(fileName);
+  toast("PDFをA4で保存しました（複数ページ対応）。LINEへ送信してください。");
+}
