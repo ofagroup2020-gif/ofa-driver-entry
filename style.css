@@ -1,25 +1,148 @@
-const steps = document.querySelectorAll(".step");
-let current = 1;
-
-const barFill = document.getElementById("barFill");
-const stepText = document.getElementById("stepText");
-
-function setStep(n) {
-  current = n;
-  steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === n));
-  barFill.style.width = `${(n - 1) / (steps.length - 1) * 100}%`;
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
+  background: linear-gradient(180deg,#fff4ea,#ffffff);
+  color:#1f2328;
 }
 
-document.getElementById("nextBtn").onclick = () => {
-  if (current === 7 && !document.getElementById("agree").checked) {
-    alert("規約に同意してください");
-    return;
-  }
-  if (current < steps.length) setStep(current + 1);
-};
+.app {
+  max-width: 480px;
+  margin: auto;
+  padding: 16px;
+}
 
-document.getElementById("backBtn").onclick = () => {
-  if (current > 1) setStep(current - 1);
-};
+.header {
+  margin-bottom: 20px;
+}
 
-setStep(1);
+.brand {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo {
+  width:48px;
+  height:48px;
+  border-radius:14px;
+}
+
+.brandMain {
+  font-weight:900;
+  font-size:18px;
+}
+
+.brandSub {
+  font-size:12px;
+  color:#6b7280;
+}
+
+.progressBar {
+  height:6px;
+  background:#eee;
+  border-radius:99px;
+  margin-top:10px;
+}
+
+#bar {
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#ff7a00,#ffb000);
+  border-radius:99px;
+}
+
+#stepLabel {
+  font-size:12px;
+  color:#6b7280;
+  margin-top:4px;
+}
+
+.step {
+  display:none;
+  background:#fff;
+  padding:18px;
+  border-radius:18px;
+  margin-bottom:16px;
+}
+
+.step.active {
+  display:block;
+}
+
+h1 {
+  margin-top:0;
+  font-size:18px;
+}
+
+p {
+  font-size:13px;
+  color:#6b7280;
+}
+
+input,select {
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #ddd;
+}
+
+.selectGroup {
+  display:flex;
+  gap:8px;
+}
+
+.selectBtn {
+  flex:1;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #ddd;
+  background:#fff;
+}
+
+.selectBtn.active {
+  border-color:#ff7a00;
+}
+
+.terms {
+  font-size:12px;
+  line-height:1.6;
+  border:1px solid #ddd;
+  padding:12px;
+  border-radius:14px;
+  background:#fafafa;
+}
+
+.agree {
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+  font-size:13px;
+}
+
+.nav {
+  display:flex;
+  gap:10px;
+}
+
+button {
+  padding:14px;
+  border-radius:14px;
+  border:0;
+  font-weight:900;
+}
+
+.mainBtn {
+  background:linear-gradient(135deg,#ff7a00,#ffb000);
+}
+
+.lineBtn {
+  display:block;
+  margin-top:12px;
+  text-align:center;
+  padding:14px;
+  background:#06c755;
+  color:#fff;
+  border-radius:14px;
+  text-decoration:none;
+}
