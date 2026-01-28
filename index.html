@@ -3,29 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>OFA GROUP Driver App</title>
+  <meta name="format-detection" content="telephone=no" />
+  <title>OFA GROUP Driver Registration App</title>
 
   <!-- PWA -->
   <link rel="manifest" href="./manifest.webmanifest" />
   <meta name="theme-color" content="#ff7a00" />
+  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png" />
 
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- jsPDF -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <!-- html2canvas（画面を画像化→PDFに貼るので日本語OK・ttf不要） -->
+  <!-- PDF (日本語OKにするため：DOM→画像→PDF方式) -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
   <div class="bg"></div>
 
   <div class="app">
+
+    <!-- Top App Bar -->
     <header class="topbar">
       <div class="topLeft">
         <div class="logoWrap" aria-hidden="true">
-          <!-- ロゴが無くても崩れない（? にならない） -->
-          <div class="logoFallback">OFA</div>
+          <img src="./assets/ofa-logo-192.png" class="logoImg" alt="OFA GROUP" onerror="this.style.display='none'; this.parentElement.classList.add('logoFallback')" />
+          <div class="logoFallbackBadge">OFA</div>
         </div>
 
         <div class="brand">
@@ -42,18 +45,20 @@
       </div>
     </header>
 
+    <!-- Progress -->
     <section class="progressZone">
       <div class="progressBar">
         <div id="barFill" class="barFill"></div>
       </div>
-
-      <div class="dots" aria-hidden="true">
+      <div class="dots" aria-hidden="true" id="dots">
         <span class="d on"></span><span class="d"></span><span class="d"></span><span class="d"></span>
         <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
       </div>
     </section>
 
+    <!-- Content -->
     <main class="card">
+
       <!-- STEP 1 -->
       <section class="step active" data-step="1">
         <div class="head">
@@ -292,19 +297,20 @@
 
         <div class="ctaStack">
           <button id="makePdfBtn" class="btnPrimary" type="button">
-            登録PDFを作成（保存）
+            PDFを作成して開く（保存/共有/印刷）
           </button>
 
-          <a id="lineLinkBtn" class="btnLine" href="#" target="_blank" rel="noreferrer">
+          <a id="lineLinkBtn" class="btnLine" href="https://lin.ee/Ev7r84H5" target="_blank" rel="noreferrer">
             OFAメンバーシップLINEを開く
           </a>
 
           <div class="subHelp">
-            ※ PDF作成後、LINEで「ファイル」からPDFを添付して送信してください。
+            ※ PDFを開いた画面の「共有」から、保存・LINE送信・印刷ができます。
           </div>
         </div>
       </section>
 
+      <!-- Bottom Navigation -->
       <div class="nav">
         <button id="backBtn" class="btnGhost" type="button">戻る</button>
         <button id="nextBtn" class="btnPrimary" type="button">次へ</button>
@@ -319,9 +325,37 @@
     </footer>
   </div>
 
-  <!-- PDF用の隠しシート（ここを画像化してPDFにする＝日本語OK） -->
-  <div id="pdfSheet" class="pdfSheet" aria-hidden="true"></div>
+  <!-- PDF用：画面には出さないA4原稿（ここを画像化してPDFにする） -->
+  <div id="pdfPaper" class="pdfPaper" aria-hidden="true">
+    <div class="pdfHeader">
+      <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
+      <div class="pdfDate" id="pdfDate"></div>
+      <div class="pdfMotto">One for All, All for One</div>
+    </div>
+
+    <div class="pdfGrid" id="pdfGrid"></div>
+
+    <div class="pdfSectionTitle">提出画像</div>
+    <div class="pdfImgGrid">
+      <div class="pdfImgBox">
+        <div class="pdfImgLabel">免許証 表面（必須）</div>
+        <img id="pdfImgFront" alt="" />
+      </div>
+      <div class="pdfImgBox">
+        <div class="pdfImgLabel">免許証 裏面（任意）</div>
+        <img id="pdfImgBack" alt="" />
+      </div>
+    </div>
+
+    <div class="pdfFooterNote">このPDFを「OFAメンバーシップLINE」へ添付して送信してください。</div>
+  </div>
 
   <script src="./app.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    }
+  </script>
 </body>
 </html>
