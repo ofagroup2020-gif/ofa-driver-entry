@@ -1,165 +1,336 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>OFA GROUP Driver App</title>
 
-  <link rel="manifest" href="./manifest.webmanifest">
-  <meta name="theme-color" content="#ff7a00">
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#ff7a00" />
+  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png" />
 
-  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png">
+  <link rel="stylesheet" href="./style.css" />
 
-  <link rel="stylesheet" href="./style.css">
+  <!-- jsPDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
-<div class="app">
+  <div class="bg"></div>
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="brand">
-      <img src="./assets/ofa-logo-192.png" class="logo">
-      <div class="brandText">
-        <div class="brandMain">OFA GROUP</div>
-        <div class="brandSub">Driver Registration App</div>
-      </div>
-    </div>
+  <div class="app">
+    <!-- Top App Bar -->
+    <header class="topbar">
+      <div class="topLeft">
+        <div class="logoWrap" aria-hidden="true">
+          <img src="./assets/ofa-logo-192.png" class="logoImg" alt="OFA GROUP" />
+        </div>
 
-    <div class="progressWrap">
-      <div class="progressBar"><div id="bar"></div></div>
-      <div id="stepLabel">STEP 1 / 8</div>
-    </div>
-  </header>
-
-  <!-- BODY -->
-  <main class="content">
-
-    <!-- STEP 1 -->
-    <section class="step active" data-step="1">
-      <h1>ドライバー基本情報</h1>
-      <p>本登録はドライバーご本人が行ってください。</p>
-
-      <input id="name" placeholder="氏名（漢字）">
-      <input id="kana" placeholder="フリガナ">
-      <input id="phone" placeholder="電話番号">
-      <input id="email" placeholder="メールアドレス">
-      <label>生年月日</label>
-      <input id="birth" type="date">
-    </section>
-
-    <!-- STEP 2 -->
-    <section class="step" data-step="2">
-      <h1>住所情報</h1>
-      <input id="zip" placeholder="郵便番号">
-      <input id="pref" placeholder="都道府県">
-      <input id="city" placeholder="市区町村">
-      <input id="addr1" placeholder="番地">
-      <input id="addr2" placeholder="建物名（任意）">
-    </section>
-
-    <!-- STEP 3 -->
-    <section class="step" data-step="3">
-      <h1>所属区分</h1>
-
-      <div class="selectGroup">
-        <button class="selectBtn" data-value="協力会社">協力会社</button>
-        <button class="selectBtn" data-value="FC">FC</button>
-        <button class="selectBtn" data-value="個人">個人</button>
+        <div class="brand">
+          <div class="brandName">OFA GROUP</div>
+          <div class="brandSub">Driver Registration App</div>
+        </div>
       </div>
 
-      <input type="hidden" id="affType">
-      <input id="company" placeholder="所属会社名（任意）">
-    </section>
+      <div class="topRight">
+        <div class="chip">
+          <span class="dot"></span>
+          <span id="stepLabel">STEP 1 / 8</span>
+        </div>
+      </div>
+    </header>
 
-    <!-- STEP 4 -->
-    <section class="step" data-step="4">
-      <h1>車両情報</h1>
-      <select id="vehicleType">
-        <option value="">車種を選択</option>
-        <option>軽バン</option>
-        <option>軽箱</option>
-        <option>軽トラ</option>
-      </select>
-      <input id="plate" placeholder="車両ナンバー">
-      <select id="blackPlate">
-        <option value="">黒ナンバー</option>
-        <option>あり</option>
-        <option>なし</option>
-      </select>
-    </section>
-
-    <!-- STEP 5 -->
-    <section class="step" data-step="5">
-      <h1>運転免許証</h1>
-      <p>本人確認のため必須です。</p>
-      <input id="licFront" type="file" accept="image/*">
-      <input id="licBack" type="file" accept="image/*">
-    </section>
-
-    <!-- STEP 6 -->
-    <section class="step" data-step="6">
-      <h1>振込先口座</h1>
-      <input id="bank" placeholder="銀行名">
-      <input id="branch" placeholder="支店名">
-      <select id="acctType">
-        <option value="">口座種別</option>
-        <option>普通</option>
-        <option>当座</option>
-      </select>
-      <input id="acctNo" placeholder="口座番号">
-      <input id="acctName" placeholder="口座名義（カナ）">
-    </section>
-
-    <!-- STEP 7 規約 -->
-    <section class="step" data-step="7">
-      <h1>登録規約</h1>
-
-      <div class="terms">
-        <p>・本登録はドライバー本人が行うものとします。</p>
-        <p>・入力内容および提出書類は正確な情報であることを保証してください。</p>
-        <p>・虚偽申告・不正が判明した場合、登録・契約をお断りする場合があります。</p>
-        <p>・取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。</p>
-        <p>・登録後、OFA GROUP担当者より連絡を行い案件を決定します。</p>
+    <!-- Progress + Step Dots -->
+    <section class="progressZone">
+      <div class="progressBar">
+        <div id="barFill" class="barFill"></div>
       </div>
 
-      <label class="agree">
-        <input type="checkbox" id="agree">
-        上記内容に同意します
-      </label>
+      <div class="dots" aria-hidden="true">
+        <span class="d on"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+        <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+      </div>
     </section>
 
-    <!-- STEP 8 -->
-    <section class="step" data-step="8">
-      <h1>登録完了</h1>
-      <p>
-        登録内容をPDFで作成し、<br>
-        LINE公式へ送信してください。
-      </p>
+    <!-- Content -->
+    <main class="card">
 
-      <button id="makePdf" class="mainBtn">登録PDFを作成</button>
+      <!-- STEP 1 -->
+      <section class="step active" data-step="1">
+        <div class="head">
+          <div class="badge b1">PROFILE</div>
+          <h1>ドライバー基本情報</h1>
+          <p>本登録はドライバーご本人が行ってください。</p>
+        </div>
 
-      <a class="lineBtn" href="https://lin.ee/Ev7r84H5" target="_blank">
-        LINE公式を開く
-      </a>
-    </section>
+        <div class="grid">
+          <div class="field">
+            <label>氏名（漢字）</label>
+            <input id="name" type="text" placeholder="山田 太郎" autocomplete="name" />
+          </div>
 
-  </main>
+          <div class="field">
+            <label>フリガナ</label>
+            <input id="kana" type="text" placeholder="ヤマダ タロウ" />
+          </div>
 
-  <!-- NAV -->
-  <footer class="nav">
-    <button id="back">戻る</button>
-    <button id="next" class="mainBtn">次へ</button>
-  </footer>
+          <div class="field">
+            <label>電話番号</label>
+            <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" />
+          </div>
 
-</div>
+          <div class="field">
+            <label>メールアドレス</label>
+            <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" />
+          </div>
 
-<script src="./app.js"></script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js');
-}
-</script>
+          <div class="field">
+            <label>生年月日</label>
+            <input id="birth" type="date" />
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="step" data-step="2">
+        <div class="head">
+          <div class="badge b2">ADDRESS</div>
+          <h1>住所情報</h1>
+          <p>日本語で入力してください。</p>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>郵便番号</label>
+            <input id="zip" type="text" inputmode="numeric" placeholder="890-0000" />
+          </div>
+
+          <div class="field">
+            <label>都道府県</label>
+            <input id="pref" type="text" placeholder="鹿児島県" />
+          </div>
+
+          <div class="field">
+            <label>市区町村</label>
+            <input id="city" type="text" placeholder="鹿児島市" />
+          </div>
+
+          <div class="field">
+            <label>番地</label>
+            <input id="addr1" type="text" placeholder="〇〇町1-2-3" />
+          </div>
+
+          <div class="field">
+            <label>建物名（任意）</label>
+            <input id="addr2" type="text" placeholder="〇〇マンション101" />
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="step" data-step="3">
+        <div class="head">
+          <div class="badge b3">AFFILIATION</div>
+          <h1>所属区分</h1>
+          <p>あなたの所属に近いものを選択してください。</p>
+        </div>
+
+        <div class="seg">
+          <button class="segBtn s1" type="button" data-value="協力会社">協力会社</button>
+          <button class="segBtn s2" type="button" data-value="FC">FC</button>
+          <button class="segBtn s3" type="button" data-value="個人">個人</button>
+        </div>
+
+        <input id="affType" type="hidden" />
+
+        <div class="field mt">
+          <label>所属会社名（任意）</label>
+          <input id="company" type="text" placeholder="株式会社〇〇 / 〇〇運送 など" />
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step" data-step="4">
+        <div class="head">
+          <div class="badge b4">VEHICLE</div>
+          <h1>車両情報</h1>
+          <p>案件案内のために必要です。</p>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>車種</label>
+            <select id="vehicleType">
+              <option value="">選択してください</option>
+              <option>軽バン</option>
+              <option>軽箱</option>
+              <option>軽トラ</option>
+              <option>その他</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>車両ナンバー</label>
+            <input id="plate" type="text" placeholder="鹿児島 480 あ 12-34" />
+          </div>
+
+          <div class="field">
+            <label>黒ナンバー</label>
+            <select id="blackPlate">
+              <option value="">選択してください</option>
+              <option>あり</option>
+              <option>なし</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 5 -->
+      <section class="step" data-step="5">
+        <div class="head">
+          <div class="badge b5">LICENSE</div>
+          <h1>運転免許証</h1>
+          <p>表面は必須です（本人確認）。</p>
+        </div>
+
+        <div class="uploadGrid">
+          <div class="upCard">
+            <div class="upTop">
+              <div class="miniTag">必須</div>
+              <div class="upTitle">表面</div>
+            </div>
+            <input id="licFront" type="file" accept="image/*" />
+            <img id="licFrontPrev" class="preview" alt="" />
+          </div>
+
+          <div class="upCard">
+            <div class="upTop">
+              <div class="miniTag gray">任意</div>
+              <div class="upTitle">裏面</div>
+            </div>
+            <input id="licBack" type="file" accept="image/*" />
+            <img id="licBackPrev" class="preview" alt="" />
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 6 -->
+      <section class="step" data-step="6">
+        <div class="head">
+          <div class="badge b6">BANK</div>
+          <h1>銀行振込先</h1>
+          <p>報酬支払いのために必要です。</p>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>銀行名</label>
+            <input id="bank" type="text" placeholder="〇〇銀行" />
+          </div>
+
+          <div class="field">
+            <label>支店名</label>
+            <input id="branch" type="text" placeholder="〇〇支店" />
+          </div>
+
+          <div class="field">
+            <label>口座種別</label>
+            <select id="acctType">
+              <option value="">選択してください</option>
+              <option>普通</option>
+              <option>当座</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>口座番号</label>
+            <input id="acctNo" type="text" inputmode="numeric" placeholder="1234567" />
+          </div>
+
+          <div class="field">
+            <label>口座名義（カナ）</label>
+            <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 7 -->
+      <section class="step" data-step="7">
+        <div class="head">
+          <div class="badge b7">TERMS</div>
+          <h1>登録規約</h1>
+          <p>内容を確認し、同意して次へ進んでください。</p>
+        </div>
+
+        <div class="termsBox">
+          <ul>
+            <li>本登録はドライバー本人が行うものとします。</li>
+            <li>入力内容および提出書類は正確な情報であることを保証してください。</li>
+            <li>虚偽申告・不正が判明した場合、登録・契約をお断りする場合があります。</li>
+            <li>取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。</li>
+            <li>登録後、OFA GROUP担当者より連絡を行い案件を決定します。</li>
+          </ul>
+        </div>
+
+        <!-- ✅ 縦になる問題を解決：横並び + 自動折返し -->
+        <label class="agreeRow">
+          <input id="agree" type="checkbox" />
+          <span class="agreeText">上記内容に同意します</span>
+        </label>
+
+        <div class="note">
+          ※ 同意チェックがない場合、次へ進めません。
+        </div>
+      </section>
+
+      <!-- STEP 8 -->
+      <section class="step" data-step="8">
+        <div class="head">
+          <div class="badge b8">DONE</div>
+          <h1>登録完了</h1>
+          <p>
+            ① 登録内容をPDFで作成<br />
+            ② <b>OFAメンバーシップLINE</b>にPDFを添付して送信してください
+          </p>
+        </div>
+
+        <div class="ctaStack">
+          <button id="makePdfBtn" class="btnPrimary" type="button">
+            登録PDFを作成（保存）
+          </button>
+
+          <a id="lineLinkBtn" class="btnLine" href="#" target="_blank" rel="noreferrer">
+            OFAメンバーシップLINEを開く
+          </a>
+
+          <div class="subHelp">
+            ※ PDF作成後、LINEで「ファイル」からPDFを添付して送信してください。
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Navigation -->
+      <div class="nav">
+        <button id="backBtn" class="btnGhost" type="button">戻る</button>
+        <button id="nextBtn" class="btnPrimary" type="button">次へ</button>
+      </div>
+
+      <div id="toast" class="toast"></div>
+    </main>
+
+    <footer class="foot">
+      <div class="footLeft">© OFA GROUP</div>
+      <div class="footRight">One for All, All for One</div>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    }
+  </script>
 </body>
 </html>
