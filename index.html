@@ -4,52 +4,48 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>OFA GROUP Driver Registration App</title>
-  <link rel="stylesheet" href="./style.css" />
-
-  <!-- html2canvas + jsPDF（PDFを“開いて”共有/印刷できる） -->
-  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script defer src="./app.js"></script>
+  <link rel="stylesheet" href="./style.css?v=20260129_1" />
 </head>
 
 <body>
   <div class="bg" aria-hidden="true"></div>
 
   <div class="app">
-    <!-- TOP -->
-    <header class="topbar">
+    <!-- top -->
+    <div class="topbar">
       <div class="topLeft">
         <div class="logoWrap" id="logoWrap">
-          <!-- 画像が無くても崩れない -->
+          <!-- ロゴ画像があるなら public/ofa-logo.png などに差し替え -->
           <img class="logoImg" id="logoImg" src="./public/ofa-logo.png" alt="OFA" onerror="this.style.display='none';document.getElementById('logoWrap').classList.add('logoFallback');" />
           <div class="logoFallbackBadge">OFA</div>
         </div>
+
         <div class="brand">
           <div class="brandName">OFA GROUP</div>
           <div class="brandSub">Driver Registration App</div>
         </div>
       </div>
 
-      <div class="chip" aria-label="step">
+      <div class="chip">
         <span class="dot"></span>
-        <span>STEP <b id="stepNo">1</b> / 8</span>
+        <span>STEP <span id="stepNo">1</span> / 8</span>
       </div>
-    </header>
+    </div>
 
-    <!-- PROGRESS -->
-    <section class="progressZone" aria-label="progress">
+    <!-- progress -->
+    <div class="progressZone">
       <div class="progressBar">
         <div class="barFill" id="bar"></div>
       </div>
       <div class="dots" id="dots"></div>
-    </section>
+    </div>
 
-    <!-- CARD -->
-    <main class="card">
+    <!-- main card -->
+    <div class="card">
       <!-- STEP 1 -->
       <section class="step active" data-step="1">
         <div class="head">
-          <span class="badge b1">PROFILE</span>
+          <div class="badge b1">PROFILE</div>
           <h1>ドライバー基本情報</h1>
           <p>本登録はドライバーご本人が行ってください。</p>
         </div>
@@ -78,15 +74,15 @@
         </div>
 
         <div class="nav">
-          <button class="btnGhost" id="back1" type="button">戻る</button>
-          <button class="btnPrimary" id="next1" type="button">次へ</button>
+          <button class="btnGhost" id="back" disabled>戻る</button>
+          <button class="btnPrimary" id="next">次へ</button>
         </div>
       </section>
 
       <!-- STEP 2 -->
       <section class="step" data-step="2">
         <div class="head">
-          <span class="badge b2">ADDRESS</span>
+          <div class="badge b2">ADDRESS</div>
           <h1>住所情報</h1>
           <p>日本語で入力してください。</p>
         </div>
@@ -115,42 +111,45 @@
         </div>
 
         <div class="nav">
-          <button class="btnGhost" id="back2" type="button">戻る</button>
-          <button class="btnPrimary" id="next2" type="button">次へ</button>
+          <button class="btnGhost" id="back2">戻る</button>
+          <button class="btnPrimary" id="next2">次へ</button>
         </div>
       </section>
 
       <!-- STEP 3 -->
       <section class="step" data-step="3">
         <div class="head">
-          <span class="badge b3">AFFILIATION</span>
+          <div class="badge b3">AFFILIATION</div>
           <h1>所属区分</h1>
           <p>あなたの所属に近いものを選択してください。</p>
         </div>
 
-        <!-- ここ：所属区分の“表示欄”は作らない（ボタンのみで決定） -->
-        <div class="seg" role="group" aria-label="affiliation">
-          <button class="segBtn" type="button" data-val="協力会社">協力会社</button>
-          <button class="segBtn" type="button" data-val="FC">FC</button>
-          <button class="segBtn" type="button" data-val="個人">個人</button>
+        <div class="seg" role="group" aria-label="所属区分">
+          <button type="button" class="segBtn active" data-val="協力会社">協力会社</button>
+          <button type="button" class="segBtn" data-val="FC">FC</button>
+          <button type="button" class="segBtn" data-val="個人">個人</button>
         </div>
-        <input type="hidden" id="aff" value="" />
 
-        <div class="mt field">
-          <label for="company">所属会社名（任意）</label>
-          <input id="company" placeholder="株式会社〇〇 / 〇〇運送 など" />
+        <!-- 表示いらない：値は hidden に保持だけ -->
+        <input id="aff" type="hidden" value="協力会社" />
+
+        <div class="mt">
+          <div class="field">
+            <label for="affCompany">所属会社名（任意）</label>
+            <input id="affCompany" placeholder="例）株式会社〇〇 / 〇〇運送など" />
+          </div>
         </div>
 
         <div class="nav">
-          <button class="btnGhost" id="back3" type="button">戻る</button>
-          <button class="btnPrimary" id="next3" type="button">次へ</button>
+          <button class="btnGhost" id="back3">戻る</button>
+          <button class="btnPrimary" id="next3">次へ</button>
         </div>
       </section>
 
       <!-- STEP 4 -->
       <section class="step" data-step="4">
         <div class="head">
-          <span class="badge b4">VEHICLE</span>
+          <div class="badge b4">VEHICLE</div>
           <h1>車両情報</h1>
           <p>稼働に必要な車両情報を入力してください。</p>
         </div>
@@ -167,13 +166,15 @@
               <option value="その他">その他</option>
             </select>
           </div>
+
           <div class="field">
             <label for="carNo">車両ナンバー</label>
-            <input id="carNo" placeholder="例）鹿児島 480 に 21-15" />
+            <input id="carNo" placeholder="例）鹿児島 480 さ 12-34" />
           </div>
+
           <div class="field">
-            <label for="black">黒ナンバー</label>
-            <select id="black">
+            <label for="blackNo">黒ナンバー</label>
+            <select id="blackNo">
               <option value="">選択してください</option>
               <option value="あり">あり</option>
               <option value="なし">なし</option>
@@ -182,75 +183,77 @@
         </div>
 
         <div class="nav">
-          <button class="btnGhost" id="back4" type="button">戻る</button>
-          <button class="btnPrimary" id="next4" type="button">次へ</button>
+          <button class="btnGhost" id="back4">戻る</button>
+          <button class="btnPrimary" id="next4">次へ</button>
         </div>
       </section>
 
       <!-- STEP 5 -->
       <section class="step" data-step="5">
         <div class="head">
-          <span class="badge b5">BANK</span>
-          <h1>振込先情報</h1>
-          <p>報酬の振込先を入力してください。</p>
+          <div class="badge b5">BANK</div>
+          <h1>口座情報</h1>
+          <p>報酬振込に使用します。</p>
         </div>
 
         <div class="grid">
           <div class="field">
             <label for="bank">銀行</label>
-            <input id="bank" placeholder="例）〇〇銀行" />
+            <input id="bank" placeholder="例）三井住友銀行" />
           </div>
           <div class="field">
             <label for="branch">支店</label>
             <input id="branch" placeholder="例）鹿児島支店" />
           </div>
           <div class="field">
-            <label for="acctType">口座種別</label>
-            <select id="acctType">
+            <label for="accType">口座種別</label>
+            <select id="accType">
               <option value="">選択してください</option>
               <option value="普通">普通</option>
               <option value="当座">当座</option>
             </select>
           </div>
           <div class="field">
-            <label for="acctNo">口座番号</label>
-            <input id="acctNo" placeholder="例）1234567" inputmode="numeric" />
+            <label for="accNo">口座番号</label>
+            <input id="accNo" placeholder="例）1234567" inputmode="numeric" />
           </div>
           <div class="field">
-            <label for="acctName">口座名義（カナ）</label>
-            <input id="acctName" placeholder="例）ヤマダ タロウ" />
+            <label for="accNameKana">口座名義（カナ）</label>
+            <input id="accNameKana" placeholder="例）ヤマダ タロウ" />
           </div>
         </div>
 
         <div class="nav">
-          <button class="btnGhost" id="back5" type="button">戻る</button>
-          <button class="btnPrimary" id="next5" type="button">次へ</button>
+          <button class="btnGhost" id="back5">戻る</button>
+          <button class="btnPrimary" id="next5">次へ</button>
         </div>
       </section>
 
       <!-- STEP 6 -->
       <section class="step" data-step="6">
         <div class="head">
-          <span class="badge b6">UPLOAD</span>
+          <div class="badge b6">UPLOAD</div>
           <h1>提出画像</h1>
-          <p>免許証の写真をアップロードしてください。</p>
+          <p>免許証は文字が読めるように撮影してください（推奨：横向き／手ブレなし）。</p>
         </div>
 
         <div class="uploadGrid">
           <div class="upCard">
             <div class="upTop">
               <div class="upTitle">免許証 表面（必須）</div>
-              <span class="miniTag">必須</span>
+              <div class="miniTag">必須</div>
             </div>
             <input id="licF" type="file" accept="image/*" />
             <img id="prevF" class="preview" alt="preview front" />
-            <p class="subHelp">※ 縦長でもOK。PDF側で上下余白を自動カットして見やすく出力します。</p>
+            <div class="subHelp mt">
+              ※ PDFでは<strong>縮小せず</strong>、<strong>上下の余白だけ自動カット</strong>して見やすく出力します。
+            </div>
           </div>
 
           <div class="upCard">
             <div class="upTop">
               <div class="upTitle">免許証 裏面（任意）</div>
-              <span class="miniTag gray">任意</span>
+              <div class="miniTag gray">任意</div>
             </div>
             <input id="licB" type="file" accept="image/*" />
             <img id="prevB" class="preview" alt="preview back" />
@@ -258,15 +261,15 @@
         </div>
 
         <div class="nav">
-          <button class="btnGhost" id="back6" type="button">戻る</button>
-          <button class="btnPrimary" id="next6" type="button">次へ</button>
+          <button class="btnGhost" id="back6">戻る</button>
+          <button class="btnPrimary" id="next6">次へ</button>
         </div>
       </section>
 
       <!-- STEP 7 -->
       <section class="step" data-step="7">
         <div class="head">
-          <span class="badge b7">TERMS</span>
+          <div class="badge b7">TERMS</div>
           <h1>確認事項</h1>
           <p>内容を確認し、同意して次へ進んでください。</p>
         </div>
@@ -285,43 +288,46 @@
           <input id="agree" type="checkbox" />
           <span class="agreeText">上記に同意します</span>
         </label>
-        <div class="note">※同意後「次へ」で完了画面へ進みます。</div>
+
+        <div class="note">※ 同意後「次へ」で完了画面へ進みます。</div>
 
         <div class="nav">
-          <button class="btnGhost" id="back7" type="button">戻る</button>
-          <button class="btnPrimary" id="next7" type="button">次へ</button>
+          <button class="btnGhost" id="back7">戻る</button>
+          <button class="btnPrimary" id="next7">次へ</button>
         </div>
       </section>
 
       <!-- STEP 8 -->
       <section class="step" data-step="8">
         <div class="head">
-          <span class="badge b8">DONE</span>
+          <div class="badge b8">DONE</div>
           <h1>登録完了</h1>
-          <p>
-            ① まず <b>OFAメンバーシップLINE</b> を追加（開く）<br/>
-            ② 次に <b>登録PDF</b> を作成し、共有からLINEへ送信してください
-          </p>
+          <p>導線：<strong>① 先にOFAメンバーシップLINEを追加/開く → ② 登録PDFを作成（保存・共有・印刷） → ③ LINEへPDF送信</strong></p>
         </div>
 
-        <!-- 完了：横3ボタン（導線をLINE→PDFにする） -->
-        <div class="doneRow3">
-          <a class="btnLine mini3" id="lineBtn" href="#" target="_blank" rel="noopener">LINE追加/開く</a>
-          <button class="btnPrimary mini3" id="pdfBtn" type="button">PDF作成</button>
-          <button class="btnGhost mini3" id="restartBtn" type="button">最初から</button>
+        <div class="ctaStack">
+          <a class="btnLine" id="lineBtn" href="https://lin.ee/8x437Vt" target="_blank" rel="noopener">
+            OFAメンバーシップLINE追加 / 開く
+          </a>
+
+          <button class="btnPrimary" id="pdfBtn" type="button">
+            登録PDFを作成（保存・共有・印刷）
+          </button>
+
+          <div class="subHelp">
+            ※ PDF作成後、共有ボタンから「LINE」へ送信できます。印刷は共有→印刷でOK。<br/>
+            ※ 端末により自動ダウンロードしない場合は、PDFを<strong>新しいタブ</strong>で開きます。
+          </div>
         </div>
 
-        <p class="note">
-          ※PDFはSafari/Chromeで開きます。<br/>
-          共有（↑）から「LINEへ送信」や「印刷」ができます。
-        </p>
-
-        <div class="nav">
-          <button class="btnGhost" id="back8" type="button">戻る</button>
-          <button class="btnPrimary" id="finishBtn" type="button">完了</button>
+        <!-- 横3個ボタン -->
+        <div class="nav nav3">
+          <button class="btnGhost" id="back8">戻る</button>
+          <a class="btnLine btnLineMini" href="https://lin.ee/8x437Vt" target="_blank" rel="noopener">LINE</a>
+          <button class="btnPrimary" id="restart" type="button">最初から</button>
         </div>
       </section>
-    </main>
+    </div>
 
     <div class="foot">
       <div>© OFA GROUP</div>
@@ -329,32 +335,40 @@
     </div>
   </div>
 
-  <!-- TOAST -->
+  <!-- toast -->
   <div class="toast" id="toast">保存しました</div>
 
-  <!-- PDF用の紙（非表示で描画してPDF化） -->
+  <!-- PDF用の紙（隠し） -->
   <div class="pdfPaper" id="pdfPaper" aria-hidden="true">
     <div class="pdfHeader">
       <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
-      <div class="pdfDate">作成日時：<span id="pdfDate"></span></div>
+      <div class="pdfDate" id="pdfDate">作成日時：</div>
       <div class="pdfMotto">One for All, All for One</div>
     </div>
 
-    <div class="pdfGrid" id="pdfGrid"></div>
+    <div class="pdfGrid" id="pdfGrid">
+      <!-- JSで埋める -->
+    </div>
 
     <div class="pdfSectionTitle">提出画像</div>
     <div class="pdfImgGrid">
       <div class="pdfImgBox">
         <div class="pdfImgLabel">免許証 表面（必須）</div>
-        <img id="pdfImgF" alt="" />
+        <img id="pdfImgF" alt="lic front" />
       </div>
       <div class="pdfImgBox">
         <div class="pdfImgLabel">免許証 裏面（任意）</div>
-        <img id="pdfImgB" alt="" />
+        <img id="pdfImgB" alt="lic back" />
       </div>
     </div>
 
     <div class="pdfFooterNote">このPDFを「OFAメンバーシップLINE」へ添付して送信してください。</div>
   </div>
+
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <script src="./app.js?v=20260129_1"></script>
 </body>
 </html>
