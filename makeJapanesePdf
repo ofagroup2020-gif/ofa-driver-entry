@@ -1,0 +1,35 @@
+async function makeJapanesePdf(){
+  const data = collect();
+
+  const pdfSheet = document.getElementById("pdfSheet");
+  pdfSheet.innerHTML = await buildPdfSheetHTML(data);
+
+  // A4 “1枚固定”で画像化（重要：width/heightを固定）
+  const canvas = await html2canvas(pdfSheet.firstElementChild, {
+    backgroundColor: "#ffffff",
+    scale: 2,
+    useCORS: true,
+    width: 794,
+    height: 1123,
+    windowWidth: 794,
+    windowHeight: 1123
+  });
+
+  const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  // 余白込みでA4にピッタリ収める
+  const pageW = 210;
+  const pageH = 297;
+
+  pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH);
+
+  const now = new Date();
+  const ymd = now.toISOString().slice(0,10);
+  const fileName = `OFA_登録_${data.name || "driver"}_${ymd}.pdf`;
+
+  pdf.save(fileName);
+  toast("PDFをA4で保存しました。LINEへ送信してください。");
+}
