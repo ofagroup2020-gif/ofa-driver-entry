@@ -8,23 +8,24 @@
   <!-- PWA -->
   <link rel="manifest" href="./manifest.webmanifest" />
   <meta name="theme-color" content="#ff7a00" />
-  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png" />
 
   <link rel="stylesheet" href="./style.css" />
 
   <!-- jsPDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- html2canvas（画面を画像化→PDFに貼るので日本語OK・ttf不要） -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 
 <body>
   <div class="bg"></div>
 
   <div class="app">
-    <!-- Top App Bar -->
     <header class="topbar">
       <div class="topLeft">
         <div class="logoWrap" aria-hidden="true">
-          <img src="./assets/ofa-logo-192.png" class="logoImg" alt="OFA GROUP" />
+          <!-- ロゴが無くても崩れない（? にならない） -->
+          <div class="logoFallback">OFA</div>
         </div>
 
         <div class="brand">
@@ -41,7 +42,6 @@
       </div>
     </header>
 
-    <!-- Progress + Step Dots -->
     <section class="progressZone">
       <div class="progressBar">
         <div id="barFill" class="barFill"></div>
@@ -53,9 +53,7 @@
       </div>
     </section>
 
-    <!-- Content -->
-    <main class="card" role="main">
-
+    <main class="card">
       <!-- STEP 1 -->
       <section class="step active" data-step="1">
         <div class="head">
@@ -66,27 +64,27 @@
 
         <div class="grid">
           <div class="field">
-            <label for="name">氏名（漢字）</label>
+            <label>氏名（漢字）</label>
             <input id="name" type="text" placeholder="山田 太郎" autocomplete="name" />
           </div>
 
           <div class="field">
-            <label for="kana">フリガナ</label>
+            <label>フリガナ</label>
             <input id="kana" type="text" placeholder="ヤマダ タロウ" />
           </div>
 
           <div class="field">
-            <label for="phone">電話番号</label>
-            <input id="phone" type="tel" placeholder="09012345678" autocomplete="tel" inputmode="tel" />
+            <label>電話番号</label>
+            <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" />
           </div>
 
           <div class="field">
-            <label for="email">メールアドレス</label>
+            <label>メールアドレス</label>
             <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" />
           </div>
 
           <div class="field">
-            <label for="birth">生年月日</label>
+            <label>生年月日</label>
             <input id="birth" type="date" />
           </div>
         </div>
@@ -102,27 +100,27 @@
 
         <div class="grid">
           <div class="field">
-            <label for="zip">郵便番号</label>
-            <input id="zip" type="text" inputmode="numeric" placeholder="8900000（ハイフンなし）" />
+            <label>郵便番号</label>
+            <input id="zip" type="text" inputmode="numeric" placeholder="890-0000" />
           </div>
 
           <div class="field">
-            <label for="pref">都道府県</label>
+            <label>都道府県</label>
             <input id="pref" type="text" placeholder="鹿児島県" />
           </div>
 
           <div class="field">
-            <label for="city">市区町村</label>
+            <label>市区町村</label>
             <input id="city" type="text" placeholder="鹿児島市" />
           </div>
 
           <div class="field">
-            <label for="addr1">番地</label>
+            <label>番地</label>
             <input id="addr1" type="text" placeholder="〇〇町1-2-3" />
           </div>
 
           <div class="field">
-            <label for="addr2">建物名（任意）</label>
+            <label>建物名（任意）</label>
             <input id="addr2" type="text" placeholder="〇〇マンション101" />
           </div>
         </div>
@@ -145,7 +143,7 @@
         <input id="affType" type="hidden" />
 
         <div class="field mt">
-          <label for="company">所属会社名（任意）</label>
+          <label>所属会社名（任意）</label>
           <input id="company" type="text" placeholder="株式会社〇〇 / 〇〇運送 など" />
         </div>
       </section>
@@ -160,7 +158,7 @@
 
         <div class="grid">
           <div class="field">
-            <label for="vehicleType">車種</label>
+            <label>車種</label>
             <select id="vehicleType">
               <option value="">選択してください</option>
               <option>軽バン</option>
@@ -171,12 +169,12 @@
           </div>
 
           <div class="field">
-            <label for="plate">車両ナンバー</label>
+            <label>車両ナンバー</label>
             <input id="plate" type="text" placeholder="鹿児島 480 あ 12-34" />
           </div>
 
           <div class="field">
-            <label for="blackPlate">黒ナンバー</label>
+            <label>黒ナンバー</label>
             <select id="blackPlate">
               <option value="">選択してください</option>
               <option>あり</option>
@@ -225,17 +223,17 @@
 
         <div class="grid">
           <div class="field">
-            <label for="bank">銀行名</label>
+            <label>銀行名</label>
             <input id="bank" type="text" placeholder="〇〇銀行" />
           </div>
 
           <div class="field">
-            <label for="branch">支店名</label>
+            <label>支店名</label>
             <input id="branch" type="text" placeholder="〇〇支店" />
           </div>
 
           <div class="field">
-            <label for="acctType">口座種別</label>
+            <label>口座種別</label>
             <select id="acctType">
               <option value="">選択してください</option>
               <option>普通</option>
@@ -244,12 +242,12 @@
           </div>
 
           <div class="field">
-            <label for="acctNo">口座番号</label>
+            <label>口座番号</label>
             <input id="acctNo" type="text" inputmode="numeric" placeholder="1234567" />
           </div>
 
           <div class="field">
-            <label for="acctName">口座名義（カナ）</label>
+            <label>口座名義（カナ）</label>
             <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
           </div>
         </div>
@@ -278,9 +276,7 @@
           <span class="agreeText">上記内容に同意します</span>
         </label>
 
-        <div class="note">
-          ※ 同意チェックがない場合、次へ進めません。
-        </div>
+        <div class="note">※ 同意チェックがない場合、次へ進めません。</div>
       </section>
 
       <!-- STEP 8 -->
@@ -309,13 +305,12 @@
         </div>
       </section>
 
-      <!-- Bottom Navigation -->
       <div class="nav">
         <button id="backBtn" class="btnGhost" type="button">戻る</button>
         <button id="nextBtn" class="btnPrimary" type="button">次へ</button>
       </div>
 
-      <div id="toast" class="toast" aria-live="polite"></div>
+      <div id="toast" class="toast"></div>
     </main>
 
     <footer class="foot">
@@ -324,12 +319,9 @@
     </footer>
   </div>
 
-  <script src="./app.js"></script>
+  <!-- PDF用の隠しシート（ここを画像化してPDFにする＝日本語OK） -->
+  <div id="pdfSheet" class="pdfSheet" aria-hidden="true"></div>
 
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
-    }
-  </script>
+  <script src="./app.js"></script>
 </body>
 </html>
