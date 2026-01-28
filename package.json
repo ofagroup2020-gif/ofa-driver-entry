@@ -1,5 +1,5 @@
 {
-  "name": "ofa-driver-entry-api",
+  "name": "ofa-driver-pdf-api",
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
