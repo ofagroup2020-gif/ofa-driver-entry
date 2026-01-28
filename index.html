@@ -1,175 +1,172 @@
-:root{
-  --bg1:#fff3e8;
-  --bg2:#ffffff;
-  --card:#ffffff;
-  --text:#1f2328;
-  --muted:#6b7280;
-  --line:#e8e8ee;
+// ====== 設定：あなたのAPI URLに置換 ======
+const API_URL = "https://YOUR-RENDER-URL/api/submit";
+// =========================================
 
-  --orange:#ff7a00;
-  --orange2:#ffb000;
-  --orangeSoft:rgba(255,122,0,.14);
+const steps = [...document.querySelectorAll(".step")];
+const barFill = document.getElementById("barFill");
+const stepText = document.getElementById("stepText");
+const nextBtn = document.getElementById("nextBtn");
+const backBtn = document.getElementById("backBtn");
+const submitBtn = document.getElementById("submitBtn");
+const toast = document.getElementById("toast");
+const reviewEl = document.getElementById("review");
 
-  --radius:18px;
+let current = 1;
+
+let licFrontFile = null;
+let licBackFile = null;
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1700);
+}
+function setStep(n){
+  current = n;
+  steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === current));
+  const pct = ((current - 1) / (steps.length - 1)) * 100;
+  barFill.style.width = `${pct}%`;
+  stepText.textContent = `STEP ${current} / ${steps.length}`;
+
+  backBtn.style.visibility = current === 1 ? "hidden" : "visible";
+  nextBtn.style.display = current === steps.length ? "none" : "inline-block";
+  document.querySelector(".nav").style.display = current === steps.length ? "none" : "flex";
+
+  if(current === steps.length) renderReview();
+}
+function val(id){ return document.getElementById(id).value?.trim() || ""; }
+
+function validateStep(n){
+  if(n===1){
+    if(!val("name") || !val("kana") || !val("phone") || !val("email") || !val("birth")) return "基本情報を入力してください";
+  }
+  if(n===2){
+    if(!val("zip") || !val("pref") || !val("city") || !val("addr1")) return "住所を入力してください";
+  }
+  if(n===3){
+    if(!val("affType")) return "所属区分を選択してください";
+  }
+  if(n===4){
+    if(!val("vehicleType") || !val("plate") || !val("blackPlate")) return "車両情報を入力してください";
+  }
+  if(n===5){
+    if(!licFrontFile) return "免許証（表面）をアップロードしてください";
+  }
+  if(n===6){
+    if(!val("bank") || !val("branch") || !val("acctType") || !val("acctNo") || !val("acctName")) return "振込先を入力してください";
+  }
+  return "";
 }
 
-*{box-sizing:border-box;}
-html,body{height:100%;}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",Segoe UI,Roboto,Helvetica,Arial;
-  color:var(--text);
-  background:linear-gradient(180deg,var(--bg1) 0%, #fffaf6 55%, var(--bg2) 100%);
+nextBtn.addEventListener("click", () => {
+  const msg = validateStep(current);
+  if(msg){ showToast(msg); return; }
+  setStep(current + 1);
+});
+backBtn.addEventListener("click", () => setStep(Math.max(1, current - 1)));
+
+// 所属区分
+document.querySelectorAll(".segBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("affType").value = btn.dataset.value;
+  });
+});
+
+// プレビュー
+function setPreview(inputId, imgId, setFile){
+  const input = document.getElementById(inputId);
+  const img = document.getElementById(imgId);
+  input.addEventListener("change", () => {
+    const f = input.files?.[0];
+    if(!f) return;
+    setFile(f);
+    img.src = URL.createObjectURL(f);
+    img.classList.add("show");
+  });
+}
+setPreview("licFront","licFrontPrev",(f)=> licFrontFile=f);
+setPreview("licBack","licBackPrev",(f)=> licBackFile=f);
+
+function collectData(){
+  return {
+    name: val("name"),
+    kana: val("kana"),
+    phone: val("phone"),
+    email: val("email"),
+    birth: val("birth"),
+
+    zip: val("zip"),
+    pref: val("pref"),
+    city: val("city"),
+    addr1: val("addr1"),
+    addr2: val("addr2"),
+
+    affType: val("affType"),
+    company: val("company"),
+
+    vehicleType: val("vehicleType"),
+    plate: val("plate"),
+    blackPlate: val("blackPlate"),
+
+    bank: val("bank"),
+    branch: val("branch"),
+    acctType: val("acctType"),
+    acctNo: val("acctNo"),
+    acctName: val("acctName"),
+  };
 }
 
-.bgGlow{
-  position:fixed;
-  inset:-120px -120px auto -120px;
-  height:320px;
-  background:radial-gradient(circle at 25% 40%, rgba(255,122,0,.25) 0%, rgba(255,176,0,.18) 35%, rgba(255,255,255,0) 68%);
-  pointer-events:none;
+function renderReview(){
+  const d = collectData();
+  reviewEl.innerHTML = `
+    <div><strong>氏名</strong>${d.name}（${d.kana}）</div>
+    <div><strong>電話</strong>${d.phone}</div>
+    <div><strong>メール</strong>${d.email}</div>
+    <div><strong>生年月日</strong>${d.birth}</div>
+    <hr/>
+    <div><strong>住所</strong>${d.zip} ${d.pref}${d.city}${d.addr1} ${d.addr2}</div>
+    <hr/>
+    <div><strong>所属</strong>${d.affType}</div>
+    <div><strong>会社</strong>${d.company || "—"}</div>
+    <hr/>
+    <div><strong>車両</strong>${d.vehicleType} / ${d.plate} / 黒:${d.blackPlate}</div>
+    <hr/>
+    <div><strong>振込</strong>${d.bank} ${d.branch} / ${d.acctType} ${d.acctNo}</div>
+    <div><strong>名義</strong>${d.acctName}</div>
+  `;
 }
 
-.app{
-  max-width:540px;
-  margin:0 auto;
-  padding:18px 14px 28px;
-}
+submitBtn.addEventListener("click", async () => {
+  // 全体チェック
+  for(let i=1;i<=6;i++){
+    const msg = validateStep(i);
+    if(msg){ showToast(msg); setStep(i); return; }
+  }
 
-.top{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  margin:6px 0 14px;
-}
+  try{
+    submitBtn.disabled = true;
+    submitBtn.textContent = "送信中...";
 
-.brand{display:flex;align-items:center;gap:12px;}
+    const data = collectData();
+    const fd = new FormData();
+    fd.append("data", JSON.stringify(data));
+    fd.append("licFront", licFrontFile);
+    if(licBackFile) fd.append("licBack", licBackFile);
 
-.logo{
-  width:46px;height:46px;
-  border-radius:16px;
-  background:linear-gradient(135deg,var(--orange),var(--orange2));
-  color:#111;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:900;letter-spacing:1px;
-  box-shadow:0 10px 24px rgba(255,122,0,.22);
-}
+    const res = await fetch(API_URL, { method:"POST", body: fd });
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.message || "送信に失敗しました");
 
-.title{font-weight:900;font-size:18px;}
-.sub{color:var(--muted);font-size:12px;margin-top:2px;}
+    submitBtn.textContent = "完了しました";
+    alert("登録完了！OFA管理に自動送信しました。\nPDF: " + json.url);
+  }catch(e){
+    console.error(e);
+    alert("エラー: " + (e?.message || e));
+    submitBtn.disabled = false;
+    submitBtn.textContent = "登録完了 → PDF作成 → LINE自動送信";
+  }
+});
 
-.progress{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.bar{flex:1;height:10px;background:#fff;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
-.barFill{height:100%;width:0%;background:linear-gradient(90deg,var(--orange),var(--orange2));}
-.stepText{font-size:12px;color:var(--muted);min-width:86px;text-align:right;}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:18px 16px 14px;
-  box-shadow:0 12px 34px rgba(0,0,0,.07);
-}
-
-h2{margin:2px 0 10px;font-size:18px;}
-.hint{margin:0 0 12px;color:var(--muted);font-size:12px;line-height:1.45;}
-
-label{display:block;margin:12px 0 6px;font-size:12px;color:#111;}
-input,select{
-  width:100%;
-  padding:12px 12px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  outline:none;
-  font-size:14px;
-  background:#fff;
-}
-input:focus,select:focus{
-  border-color:rgba(255,122,0,.55);
-  box-shadow:0 0 0 4px rgba(255,122,0,.16);
-}
-
-.step{display:none;}
-.step.active{display:block;}
-
-.nav{display:flex;gap:10px;margin-top:14px;}
-button{
-  border:0;
-  padding:12px 14px;
-  border-radius:14px;
-  font-weight:900;
-  cursor:pointer;
-}
-.primary{
-  background:linear-gradient(135deg,var(--orange),var(--orange2));
-  color:#111;
-  flex:1;
-  box-shadow:0 12px 24px rgba(255,122,0,.18);
-}
-.ghost{
-  background:#fff;
-  border:1px solid var(--line);
-  color:#111;
-  width:120px;
-}
-.big{width:100%;padding:14px 16px;border-radius:16px;margin-top:10px;}
-
-.seg{display:flex;gap:10px;margin:10px 0 6px;}
-.segBtn{flex:1;background:#fff;border:1px solid var(--line);}
-.segBtn.active{
-  border-color:rgba(255,122,0,.65);
-  box-shadow:0 0 0 4px rgba(255,122,0,.14);
-}
-
-.upload{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.preview{
-  width:100%;
-  margin-top:10px;
-  border-radius:14px;
-  border:1px dashed var(--line);
-  background:#fafafa;
-  min-height:140px;
-  object-fit:cover;
-  display:none;
-}
-.preview.show{display:block;}
-
-.review{
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:12px;
-  background:#fffaf5;
-  font-size:13px;
-  line-height:1.55;
-}
-.review strong{display:inline-block;min-width:110px;}
-
-.notice{
-  margin-top:12px;
-  padding:12px;
-  border-radius:14px;
-  border:1px solid rgba(255,122,0,.35);
-  background:var(--orangeSoft);
-  font-size:12px;
-  line-height:1.5;
-}
-
-.small{font-size:11px;color:var(--muted);margin-top:10px;}
-
-.toast{
-  position:fixed;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:18px;
-  background:#111;
-  color:#fff;
-  padding:10px 12px;
-  border-radius:999px;
-  font-size:12px;
-  opacity:0;
-  pointer-events:none;
-  transition:.25s;
-}
-.toast.show{opacity:1;}
-
-.foot{margin-top:14px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px;}
+setStep(1);
