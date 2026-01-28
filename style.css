@@ -56,6 +56,7 @@ body{
   background: rgba(255,255,255,.75);
   display:grid;place-items:center;
   box-shadow: 0 8px 20px rgba(0,0,0,.10);
+  position:relative;
   overflow:hidden;
 }
 .logoImg{width:34px;height:34px;object-fit:contain}
@@ -69,8 +70,8 @@ body{
 .logoWrap.logoFallback .logoFallbackBadge{display:block}
 
 .brand{min-width:0}
-.brandName{font-weight:900;letter-spacing:.06em}
-.brandSub{font-size:12px;color:var(--muted);margin-top:2px}
+.brandName{font-weight:900;letter-spacing:.06em;}
+.brandSub{font-size:12px;color:var(--muted);margin-top:2px;}
 
 .chip{
   display:flex;align-items:center;gap:8px;
@@ -145,8 +146,8 @@ body{
 .b7{border-left:6px solid #00c300}
 .b8{border-left:6px solid #6a00ff}
 
-h1{margin:12px 0 6px;font-size:26px;letter-spacing:.02em}
-.head p{margin:0 0 10px;color:var(--muted);line-height:1.55}
+h1{margin: 12px 0 6px;font-size: 26px;letter-spacing:.02em;}
+.head p{margin:0 0 10px;color:var(--muted);line-height:1.5}
 
 .step{display:none}
 .step.active{display:block}
@@ -158,12 +159,11 @@ h1{margin:12px 0 6px;font-size:26px;letter-spacing:.02em}
 }
 .field{display:flex;flex-direction:column;gap:6px}
 label{font-size:13px;color:#2a3242;font-weight:800}
-
 input,select{
   width:100%;
-  padding:14px 14px;
-  border-radius:16px;
-  border:1px solid rgba(30,40,60,.10);
+  padding: 14px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(30,40,60,.10);
   background: rgba(255,255,255,.78);
   outline:none;
   font-size:15px;
@@ -175,12 +175,12 @@ input:focus,select:focus{
 }
 .mt{margin-top:10px}
 
-.seg{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.seg{display:flex;gap:10px;flex-wrap:wrap;margin-top: 6px;}
 .segBtn{
   flex:1;
   min-width: 120px;
-  padding:14px 12px;
-  border-radius:18px;
+  padding: 14px 12px;
+  border-radius: 18px;
   border:1px solid rgba(30,40,60,.10);
   background: rgba(255,255,255,.78);
   font-weight:900;
@@ -223,6 +223,7 @@ input:focus,select:focus{
   object-fit: cover;
   max-height: 260px;
 }
+.subHelp{color:var(--muted);font-size:13px;line-height:1.55;margin:8px 0 0}
 
 .termsBox{
   margin-top: 10px;
@@ -233,7 +234,6 @@ input:focus,select:focus{
   box-shadow: 0 14px 30px rgba(0,0,0,.06);
 }
 .termsBox ul{margin:0;padding-left:18px;color:#2b3445;line-height:1.7}
-
 .agreeRow{
   display:flex;
   align-items:center;
@@ -246,7 +246,7 @@ input:focus,select:focus{
 }
 .agreeRow input{width:20px;height:20px;box-shadow:none}
 .agreeText{font-weight:900;letter-spacing:.02em}
-.note{margin-top:10px;color:var(--muted);font-size:13px;line-height:1.55}
+.note{margin-top:8px;color:var(--muted);font-size:13px}
 
 .btnPrimary,.btnLine,.btnGhost{
   border:none; cursor:pointer;
@@ -258,9 +258,12 @@ input:focus,select:focus{
   text-align:center;
   text-decoration:none;
   box-shadow: 0 18px 40px rgba(0,0,0,.16);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
 }
-.btnPrimary{background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3)); color:#fff;}
-.btnLine{background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95)); color:#fff;}
+.btnPrimary{background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3)); color:white;}
+.btnLine{background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95)); color:white;}
 .btnGhost{
   background: rgba(255,255,255,.78);
   color:#0b1220;
@@ -268,31 +271,28 @@ input:focus,select:focus{
   box-shadow: 0 14px 30px rgba(0,0,0,.08);
 }
 
-.nav{display:flex;gap:12px;margin-top:14px}
+.nav{display:flex; gap:12px; margin-top: 14px;}
 .nav .btnGhost{flex:1}
 .nav .btnPrimary{flex:1}
 
-/* STEP8：横3ボタン */
-.tri{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 12px;
+.doneRow3{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
 }
-.tri .btnPrimary,.tri .btnLine,.tri .btnGhost{
-  width:100%;
-  padding: 14px 10px;
-  font-size: 14px;
+.mini3{
+  flex:1;
+  padding:14px 10px;
+  font-size:14px;
 }
 
-/* toast */
 .toast{
   position:fixed;
   left:50%;
   bottom: calc(16px + var(--safeBottom));
   transform: translateX(-50%);
   background: rgba(10,16,26,.90);
-  color: #fff;
+  color: white;
   padding: 12px 14px;
   border-radius: 16px;
   font-weight: 900;
@@ -320,7 +320,8 @@ input:focus,select:focus{
   .grid{grid-template-columns:1fr}
   .uploadGrid{grid-template-columns:1fr}
   h1{font-size:24px}
-  .tri{grid-template-columns:1fr}
+  .doneRow3{flex-direction:column;}
+  .mini3{width:100%;}
 }
 
 /* ===== PDF paper (hidden) ===== */
@@ -379,13 +380,12 @@ input:focus,select:focus{
   padding: 10px;
 }
 .pdfImgLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:8px}
-
-/* ★ここが重要：免許証が小さくならないよう「cover」で上下を自動カット */
+/* ★ここが重要：縮小せずに“上下余白をカットして見やすく” */
 .pdfImgBox img{
   width:100%;
-  height: 300px;           /* 少し大きく */
-  object-fit: cover;       /* 上下余白カット */
-  object-position: center; /* 真ん中を優先 */
+  height: 260px;
+  object-fit: cover;         /* 余白を消して面で埋める */
+  object-position: center;   /* 中央でトリミング */
   border-radius: 10px;
   background:#fafafa;
   border:1px solid #eee;
