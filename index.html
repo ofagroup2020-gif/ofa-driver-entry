@@ -6,10 +6,8 @@
   <title>OFA GROUP Driver Entry</title>
   <link rel="stylesheet" href="./style.css" />
   <meta name="theme-color" content="#ff7a00" />
-
-  <!-- jsPDF -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
+
 <body>
   <div class="bgGlow"></div>
 
@@ -25,34 +23,30 @@
 
       <div class="progress">
         <div class="bar"><div id="barFill" class="barFill"></div></div>
-        <div id="stepText" class="stepText">STEP 1 / 8</div>
+        <div id="stepText" class="stepText">STEP 1 / 7</div>
       </div>
     </header>
 
     <main class="card">
-      <!-- STEP 1 -->
+      <!-- 1 -->
       <section class="step active" data-step="1">
-        <h2>今すぐ登録</h2>
-        <p class="hint">登録は本人が入力してください。</p>
-        <label>メールアドレス</label>
-        <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" />
-        <label>電話番号</label>
-        <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" />
-      </section>
+        <h2>基本情報</h2>
+        <p class="hint">登録はドライバー本人が入力してください。</p>
 
-      <!-- STEP 2 -->
-      <section class="step" data-step="2">
-        <h2>本人情報</h2>
         <label>氏名（漢字）</label>
         <input id="name" type="text" placeholder="山田 太郎" />
         <label>フリガナ</label>
         <input id="kana" type="text" placeholder="ヤマダ タロウ" />
+        <label>電話番号</label>
+        <input id="phone" type="tel" placeholder="090-xxxx-xxxx" />
+        <label>メールアドレス</label>
+        <input id="email" type="email" placeholder="example@gmail.com" />
         <label>生年月日</label>
         <input id="birth" type="date" />
       </section>
 
-      <!-- STEP 3 -->
-      <section class="step" data-step="3">
+      <!-- 2 -->
+      <section class="step" data-step="2">
         <h2>住所（日本語）</h2>
         <label>郵便番号</label>
         <input id="zip" type="text" placeholder="890-0000" />
@@ -66,8 +60,8 @@
         <input id="addr2" type="text" placeholder="〇〇マンション101" />
       </section>
 
-      <!-- STEP 4 -->
-      <section class="step" data-step="4">
+      <!-- 3 -->
+      <section class="step" data-step="3">
         <h2>所属区分</h2>
         <div class="seg">
           <button class="segBtn" data-value="協力会社" type="button">協力会社</button>
@@ -79,8 +73,8 @@
         <input id="company" type="text" placeholder="〇〇運送 / 株式会社〇〇 など" />
       </section>
 
-      <!-- STEP 5 -->
-      <section class="step" data-step="5">
+      <!-- 4 -->
+      <section class="step" data-step="4">
         <h2>車両情報</h2>
         <label>車種</label>
         <select id="vehicleType">
@@ -100,8 +94,8 @@
         </select>
       </section>
 
-      <!-- STEP 6 -->
-      <section class="step" data-step="6">
+      <!-- 5 -->
+      <section class="step" data-step="5">
         <h2>免許証アップロード</h2>
         <p class="hint">表面は必須です。</p>
 
@@ -119,8 +113,8 @@
         </div>
       </section>
 
-      <!-- STEP 7 -->
-      <section class="step" data-step="7">
+      <!-- 6 -->
+      <section class="step" data-step="6">
         <h2>銀行振込先</h2>
         <label>銀行名</label>
         <input id="bank" type="text" placeholder="〇〇銀行" />
@@ -138,27 +132,23 @@
         <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
       </section>
 
-      <!-- STEP 8 -->
-      <section class="step" data-step="8">
+      <!-- 7 -->
+      <section class="step" data-step="7">
         <h2>登録内容の確認</h2>
         <div id="review" class="review"></div>
 
         <div class="notice">
-          登録完了後、入力データは<strong>日本語PDF</strong>に変換されます。<br/>
-          <strong>PDFを保存</strong>して、OFA管理へ送ってください。
+          登録完了後、<strong>日本語PDF（免許写真付き）</strong>を自動作成し、<br />
+          <strong>OFA管理LINEへ自動送信</strong>されます。
         </div>
 
-        <button id="makePdfBtn" class="primary big" type="button">PDFを作成して保存</button>
+        <button id="submitBtn" class="primary big" type="button">
+          登録完了 → PDF作成 → LINE自動送信
+        </button>
 
-        <div class="sendBox">
-          <div class="sendTitle">OFA管理へ送る（LINE）</div>
-          <a class="lineBtn" href="https://lin.ee/vdhKWQg" target="_blank" rel="noreferrer">
-            LINEを開く
-          </a>
-          <div class="small">
-            ※ GitHub Pagesはサーバが無いので、まずPDFを保存→LINEで送付が確実です。
-          </div>
-        </div>
+        <p class="small">
+          ※送信後、OFA担当よりご連絡し案件を決定します。
+        </p>
       </section>
 
       <div class="nav">
@@ -170,10 +160,7 @@
     </main>
 
     <footer class="foot">
-      <div class="mini">
-        登録後、OFA担当からご連絡し、希望条件を確認の上で案件を決定します。
-      </div>
-      <div class="mini2">© OFA GROUP</div>
+      <div class="mini">© OFA GROUP</div>
     </footer>
   </div>
 
