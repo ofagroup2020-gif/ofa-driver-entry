@@ -1,39 +1,39 @@
-// sw.js（全文貼り替え）
-const VERSION = '2026-01-29-01'; // ←更新のたびに数字を変える
-const CACHE_NAME = `ofa-driver-${VERSION}`;
+const CACHE_NAME = 'ofa-driver-entry-v3-20260129';
+const ASSETS = [
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './manifest.webmanifest'
+];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // すぐ新SWを有効化
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(()=>{})
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)));
+    await Promise.all(keys.map(k => (k !== CACHE_NAME) ? caches.delete(k) : null));
     await self.clients.claim();
   })());
 });
 
-// ネット優先（最新を取りに行く）
-// 取れなければキャッシュを返す
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  // 自分のサイトだけ対象
-  if (url.origin !== self.location.origin) return;
-
   event.respondWith((async () => {
+    const req = event.request;
     try {
-      const fresh = await fetch(req, { cache: 'no-store' });
-      // 成功したらキャッシュ更新
+      // まずネット優先（更新を取りやすく）
+      const fresh = await fetch(req);
       const cache = await caches.open(CACHE_NAME);
-      cache.put(req, fresh.clone());
+      cache.put(req, fresh.clone()).catch(()=>{});
       return fresh;
     } catch (e) {
-      // オフライン等ならキャッシュ
       const cached = await caches.match(req);
-      return cached || new Response('offline', { status: 503 });
+      return cached || new Response('offline', { status: 200 });
     }
   })());
 });
