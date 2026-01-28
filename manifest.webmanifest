@@ -1,0 +1,12 @@
+{
+  "name": "OFA GROUP Driver App",
+  "short_name": "OFA Driver",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#ff7a00",
+  "icons": [
+    { "src": "./assets/ofa-logo-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./assets/ofa-logo-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
