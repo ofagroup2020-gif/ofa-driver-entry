@@ -1,172 +1,154 @@
-// ====== 設定：あなたのAPI URLに置換 ======
-const API_URL = "https://YOUR-RENDER-URL/api/submit";
-// =========================================
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OFA GROUP Driver App</title>
+  <link rel="stylesheet" href="./style.css" />
+  <meta name="theme-color" content="#ff7a00" />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
 
-const steps = [...document.querySelectorAll(".step")];
-const barFill = document.getElementById("barFill");
-const stepText = document.getElementById("stepText");
-const nextBtn = document.getElementById("nextBtn");
-const backBtn = document.getElementById("backBtn");
-const submitBtn = document.getElementById("submitBtn");
-const toast = document.getElementById("toast");
-const reviewEl = document.getElementById("review");
+<body>
+  <div class="appShell">
 
-let current = 1;
+    <!-- App Header -->
+    <header class="appHeader">
+      <div class="appBrand">
+        <div class="appLogo">OFA</div>
+        <div class="appBrandText">
+          <div class="appTitle">OFA GROUP</div>
+          <div class="appSub">Driver Registration App</div>
+        </div>
+      </div>
+      <div class="progressWrap">
+        <div class="progressBar"><div id="barFill"></div></div>
+        <div id="stepText" class="stepLabel">STEP 1 / 8</div>
+      </div>
+    </header>
 
-let licFrontFile = null;
-let licBackFile = null;
+    <!-- App Body -->
+    <main class="appBody">
 
-function showToast(msg){
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 1700);
-}
-function setStep(n){
-  current = n;
-  steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === current));
-  const pct = ((current - 1) / (steps.length - 1)) * 100;
-  barFill.style.width = `${pct}%`;
-  stepText.textContent = `STEP ${current} / ${steps.length}`;
+      <!-- STEP 1 -->
+      <section class="step active" data-step="1">
+        <h2>ドライバー基本情報</h2>
+        <p class="desc">本登録はドライバーご本人が行ってください。</p>
+        <input id="name" placeholder="氏名（漢字）" />
+        <input id="kana" placeholder="フリガナ" />
+        <input id="phone" placeholder="電話番号" />
+        <input id="email" placeholder="メールアドレス" />
+        <label>生年月日</label>
+        <input id="birth" type="date" />
+      </section>
 
-  backBtn.style.visibility = current === 1 ? "hidden" : "visible";
-  nextBtn.style.display = current === steps.length ? "none" : "inline-block";
-  document.querySelector(".nav").style.display = current === steps.length ? "none" : "flex";
+      <!-- STEP 2 -->
+      <section class="step" data-step="2">
+        <h2>住所情報</h2>
+        <input id="zip" placeholder="郵便番号" />
+        <input id="pref" placeholder="都道府県" />
+        <input id="city" placeholder="市区町村" />
+        <input id="addr1" placeholder="番地" />
+        <input id="addr2" placeholder="建物名（任意）" />
+      </section>
 
-  if(current === steps.length) renderReview();
-}
-function val(id){ return document.getElementById(id).value?.trim() || ""; }
+      <!-- STEP 3 -->
+      <section class="step" data-step="3">
+        <h2>所属区分</h2>
+        <div class="seg">
+          <button class="segBtn" data-value="協力会社">協力会社</button>
+          <button class="segBtn" data-value="フランチャイズ">FC</button>
+          <button class="segBtn" data-value="個人ドライバー">個人</button>
+        </div>
+        <input type="hidden" id="affType" />
+        <input id="company" placeholder="所属会社名（任意）" />
+      </section>
 
-function validateStep(n){
-  if(n===1){
-    if(!val("name") || !val("kana") || !val("phone") || !val("email") || !val("birth")) return "基本情報を入力してください";
-  }
-  if(n===2){
-    if(!val("zip") || !val("pref") || !val("city") || !val("addr1")) return "住所を入力してください";
-  }
-  if(n===3){
-    if(!val("affType")) return "所属区分を選択してください";
-  }
-  if(n===4){
-    if(!val("vehicleType") || !val("plate") || !val("blackPlate")) return "車両情報を入力してください";
-  }
-  if(n===5){
-    if(!licFrontFile) return "免許証（表面）をアップロードしてください";
-  }
-  if(n===6){
-    if(!val("bank") || !val("branch") || !val("acctType") || !val("acctNo") || !val("acctName")) return "振込先を入力してください";
-  }
-  return "";
-}
+      <!-- STEP 4 -->
+      <section class="step" data-step="4">
+        <h2>車両情報</h2>
+        <select id="vehicleType">
+          <option value="">車種を選択</option>
+          <option>軽バン</option>
+          <option>軽箱</option>
+          <option>軽トラ</option>
+        </select>
+        <input id="plate" placeholder="車両ナンバー" />
+        <select id="blackPlate">
+          <option value="">黒ナンバー</option>
+          <option>あり</option>
+          <option>なし</option>
+        </select>
+      </section>
 
-nextBtn.addEventListener("click", () => {
-  const msg = validateStep(current);
-  if(msg){ showToast(msg); return; }
-  setStep(current + 1);
-});
-backBtn.addEventListener("click", () => setStep(Math.max(1, current - 1)));
+      <!-- STEP 5 -->
+      <section class="step" data-step="5">
+        <h2>運転免許証</h2>
+        <p class="desc">本人確認のため必須です。</p>
+        <input id="licFront" type="file" accept="image/*" />
+        <input id="licBack" type="file" accept="image/*" />
+      </section>
 
-// 所属区分
-document.querySelectorAll(".segBtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".segBtn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("affType").value = btn.dataset.value;
-  });
-});
+      <!-- STEP 6 -->
+      <section class="step" data-step="6">
+        <h2>振込先口座</h2>
+        <input id="bank" placeholder="銀行名" />
+        <input id="branch" placeholder="支店名" />
+        <select id="acctType">
+          <option value="">口座種別</option>
+          <option>普通</option>
+          <option>当座</option>
+        </select>
+        <input id="acctNo" placeholder="口座番号" />
+        <input id="acctName" placeholder="口座名義（カナ）" />
+      </section>
 
-// プレビュー
-function setPreview(inputId, imgId, setFile){
-  const input = document.getElementById(inputId);
-  const img = document.getElementById(imgId);
-  input.addEventListener("change", () => {
-    const f = input.files?.[0];
-    if(!f) return;
-    setFile(f);
-    img.src = URL.createObjectURL(f);
-    img.classList.add("show");
-  });
-}
-setPreview("licFront","licFrontPrev",(f)=> licFrontFile=f);
-setPreview("licBack","licBackPrev",(f)=> licBackFile=f);
+      <!-- STEP 7 規約 -->
+      <section class="step" data-step="7">
+        <h2>登録規約の確認</h2>
 
-function collectData(){
-  return {
-    name: val("name"),
-    kana: val("kana"),
-    phone: val("phone"),
-    email: val("email"),
-    birth: val("birth"),
+        <div class="termsBox">
+          <p>本登録はドライバー本人が行うものとします。</p>
+          <p>入力情報・提出書類は正確な内容であることを保証してください。</p>
+          <p>虚偽申告・不正が判明した場合、登録・契約をお断りする場合があります。</p>
+          <p>提出された個人情報・免許証情報は、業務連絡・案件調整・法令対応の目的で利用します。</p>
+          <p>登録後、OFA GROUP担当者より連絡を行い、案件の可否・条件を決定します。</p>
+        </div>
 
-    zip: val("zip"),
-    pref: val("pref"),
-    city: val("city"),
-    addr1: val("addr1"),
-    addr2: val("addr2"),
+        <label class="agree">
+          <input type="checkbox" id="agree" />
+          上記規約に同意します
+        </label>
+      </section>
 
-    affType: val("affType"),
-    company: val("company"),
+      <!-- STEP 8 -->
+      <section class="step" data-step="8">
+        <h2>登録完了</h2>
+        <p class="desc">
+          PDFを作成後、LINE公式へ送信してください。<br>
+          OFA担当よりご連絡いたします。
+        </p>
 
-    vehicleType: val("vehicleType"),
-    plate: val("plate"),
-    blackPlate: val("blackPlate"),
+        <button id="makePdfBtn" class="primaryBtn">
+          登録PDFを作成
+        </button>
 
-    bank: val("bank"),
-    branch: val("branch"),
-    acctType: val("acctType"),
-    acctNo: val("acctNo"),
-    acctName: val("acctName"),
-  };
-}
+        <a class="lineBtn" href="https://lin.ee/Ev7r84H5" target="_blank">
+          LINE公式を開く
+        </a>
+      </section>
 
-function renderReview(){
-  const d = collectData();
-  reviewEl.innerHTML = `
-    <div><strong>氏名</strong>${d.name}（${d.kana}）</div>
-    <div><strong>電話</strong>${d.phone}</div>
-    <div><strong>メール</strong>${d.email}</div>
-    <div><strong>生年月日</strong>${d.birth}</div>
-    <hr/>
-    <div><strong>住所</strong>${d.zip} ${d.pref}${d.city}${d.addr1} ${d.addr2}</div>
-    <hr/>
-    <div><strong>所属</strong>${d.affType}</div>
-    <div><strong>会社</strong>${d.company || "—"}</div>
-    <hr/>
-    <div><strong>車両</strong>${d.vehicleType} / ${d.plate} / 黒:${d.blackPlate}</div>
-    <hr/>
-    <div><strong>振込</strong>${d.bank} ${d.branch} / ${d.acctType} ${d.acctNo}</div>
-    <div><strong>名義</strong>${d.acctName}</div>
-  `;
-}
+    </main>
 
-submitBtn.addEventListener("click", async () => {
-  // 全体チェック
-  for(let i=1;i<=6;i++){
-    const msg = validateStep(i);
-    if(msg){ showToast(msg); setStep(i); return; }
-  }
+    <!-- Navigation -->
+    <footer class="appNav">
+      <button id="backBtn">戻る</button>
+      <button id="nextBtn" class="primaryBtn">次へ</button>
+    </footer>
 
-  try{
-    submitBtn.disabled = true;
-    submitBtn.textContent = "送信中...";
+    <div id="toast"></div>
+  </div>
 
-    const data = collectData();
-    const fd = new FormData();
-    fd.append("data", JSON.stringify(data));
-    fd.append("licFront", licFrontFile);
-    if(licBackFile) fd.append("licBack", licBackFile);
-
-    const res = await fetch(API_URL, { method:"POST", body: fd });
-    const json = await res.json();
-    if(!json.ok) throw new Error(json.message || "送信に失敗しました");
-
-    submitBtn.textContent = "完了しました";
-    alert("登録完了！OFA管理に自動送信しました。\nPDF: " + json.url);
-  }catch(e){
-    console.error(e);
-    alert("エラー: " + (e?.message || e));
-    submitBtn.disabled = false;
-    submitBtn.textContent = "登録完了 → PDF作成 → LINE自動送信";
-  }
-});
-
-setStep(1);
+  <script src="./app.js"></script>
+</body>
+</html>
