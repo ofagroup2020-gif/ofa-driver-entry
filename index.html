@@ -1,336 +1,297 @@
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>OFA GROUP Driver App</title>
+/* =========================
+   OFA Driver App - app.js
+   (このHTML専用の完全版)
+========================= */
 
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <meta name="theme-color" content="#ff7a00" />
-  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png" />
+// ▼OFAメンバーシップLINE（ここはあなたのURLに固定）
+const LINE_MEMBERSHIP_URL = "https://lin.ee/Ev7r84H5";
 
-  <link rel="stylesheet" href="./style.css" />
+// ▼日本語PDFを確実にするならAPI推奨（Render等）
+// 例: https://xxxxx.onrender.com/api/pdf
+// 未設定でも動くが、jsPDF単体だと日本語が文字化けしやすい
+const API_PDF_URL = ""; // ←使うならここに入れる
 
-  <!-- jsPDF -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-</head>
+document.addEventListener("DOMContentLoaded", () => {
+  const steps = Array.from(document.querySelectorAll(".step"));
+  const nextBtn = document.getElementById("nextBtn");
+  const backBtn = document.getElementById("backBtn");
+  const barFill = document.getElementById("barFill");
+  const stepLabel = document.getElementById("stepLabel");
+  const toastEl = document.getElementById("toast");
+  const dots = Array.from(document.querySelectorAll(".dots .d"));
 
-<body>
-  <div class="bg"></div>
+  const makePdfBtn = document.getElementById("makePdfBtn");
+  const lineLinkBtn = document.getElementById("lineLinkBtn");
 
-  <div class="app">
-    <!-- Top App Bar -->
-    <header class="topbar">
-      <div class="topLeft">
-        <div class="logoWrap" aria-hidden="true">
-          <img src="./assets/ofa-logo-192.png" class="logoImg" alt="OFA GROUP" />
-        </div>
+  // 画像アップロード
+  const licFrontInput = document.getElementById("licFront");
+  const licBackInput = document.getElementById("licBack");
+  const licFrontPrev = document.getElementById("licFrontPrev");
+  const licBackPrev = document.getElementById("licBackPrev");
 
-        <div class="brand">
-          <div class="brandName">OFA GROUP</div>
-          <div class="brandSub">Driver Registration App</div>
-        </div>
-      </div>
+  // 所属区分ボタン
+  const segBtns = Array.from(document.querySelectorAll(".segBtn"));
+  const affTypeHidden = document.getElementById("affType");
 
-      <div class="topRight">
-        <div class="chip">
-          <span class="dot"></span>
-          <span id="stepLabel">STEP 1 / 8</span>
-        </div>
-      </div>
-    </header>
+  // 規約同意
+  const agree = document.getElementById("agree");
 
-    <!-- Progress + Step Dots -->
-    <section class="progressZone">
-      <div class="progressBar">
-        <div id="barFill" class="barFill"></div>
-      </div>
+  // state
+  let current = 1;
+  let licFrontFile = null;
+  let licBackFile = null;
 
-      <div class="dots" aria-hidden="true">
-        <span class="d on"></span><span class="d"></span><span class="d"></span><span class="d"></span>
-        <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
-      </div>
-    </section>
+  /* ---------- util ---------- */
+  const $v = (id) => (document.getElementById(id)?.value || "").trim();
 
-    <!-- Content -->
-    <main class="card">
+  function showToast(msg) {
+    if (!toastEl) return alert(msg);
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove("show"), 1600);
+  }
 
-      <!-- STEP 1 -->
-      <section class="step active" data-step="1">
-        <div class="head">
-          <div class="badge b1">PROFILE</div>
-          <h1>ドライバー基本情報</h1>
-          <p>本登録はドライバーご本人が行ってください。</p>
-        </div>
+  function setStep(n) {
+    current = Math.min(Math.max(1, n), steps.length);
 
-        <div class="grid">
-          <div class="field">
-            <label>氏名（漢字）</label>
-            <input id="name" type="text" placeholder="山田 太郎" autocomplete="name" />
-          </div>
+    steps.forEach((s) => s.classList.toggle("active", Number(s.dataset.step) === current));
 
-          <div class="field">
-            <label>フリガナ</label>
-            <input id="kana" type="text" placeholder="ヤマダ タロウ" />
-          </div>
+    // progress
+    const pct = ((current - 1) / (steps.length - 1)) * 100;
+    if (barFill) barFill.style.width = `${pct}%`;
+    if (stepLabel) stepLabel.textContent = `STEP ${current} / ${steps.length}`;
 
-          <div class="field">
-            <label>電話番号</label>
-            <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" />
-          </div>
-
-          <div class="field">
-            <label>メールアドレス</label>
-            <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" />
-          </div>
-
-          <div class="field">
-            <label>生年月日</label>
-            <input id="birth" type="date" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 2 -->
-      <section class="step" data-step="2">
-        <div class="head">
-          <div class="badge b2">ADDRESS</div>
-          <h1>住所情報</h1>
-          <p>日本語で入力してください。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>郵便番号</label>
-            <input id="zip" type="text" inputmode="numeric" placeholder="890-0000" />
-          </div>
-
-          <div class="field">
-            <label>都道府県</label>
-            <input id="pref" type="text" placeholder="鹿児島県" />
-          </div>
-
-          <div class="field">
-            <label>市区町村</label>
-            <input id="city" type="text" placeholder="鹿児島市" />
-          </div>
-
-          <div class="field">
-            <label>番地</label>
-            <input id="addr1" type="text" placeholder="〇〇町1-2-3" />
-          </div>
-
-          <div class="field">
-            <label>建物名（任意）</label>
-            <input id="addr2" type="text" placeholder="〇〇マンション101" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 3 -->
-      <section class="step" data-step="3">
-        <div class="head">
-          <div class="badge b3">AFFILIATION</div>
-          <h1>所属区分</h1>
-          <p>あなたの所属に近いものを選択してください。</p>
-        </div>
-
-        <div class="seg">
-          <button class="segBtn s1" type="button" data-value="協力会社">協力会社</button>
-          <button class="segBtn s2" type="button" data-value="FC">FC</button>
-          <button class="segBtn s3" type="button" data-value="個人">個人</button>
-        </div>
-
-        <input id="affType" type="hidden" />
-
-        <div class="field mt">
-          <label>所属会社名（任意）</label>
-          <input id="company" type="text" placeholder="株式会社〇〇 / 〇〇運送 など" />
-        </div>
-      </section>
-
-      <!-- STEP 4 -->
-      <section class="step" data-step="4">
-        <div class="head">
-          <div class="badge b4">VEHICLE</div>
-          <h1>車両情報</h1>
-          <p>案件案内のために必要です。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>車種</label>
-            <select id="vehicleType">
-              <option value="">選択してください</option>
-              <option>軽バン</option>
-              <option>軽箱</option>
-              <option>軽トラ</option>
-              <option>その他</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>車両ナンバー</label>
-            <input id="plate" type="text" placeholder="鹿児島 480 あ 12-34" />
-          </div>
-
-          <div class="field">
-            <label>黒ナンバー</label>
-            <select id="blackPlate">
-              <option value="">選択してください</option>
-              <option>あり</option>
-              <option>なし</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 5 -->
-      <section class="step" data-step="5">
-        <div class="head">
-          <div class="badge b5">LICENSE</div>
-          <h1>運転免許証</h1>
-          <p>表面は必須です（本人確認）。</p>
-        </div>
-
-        <div class="uploadGrid">
-          <div class="upCard">
-            <div class="upTop">
-              <div class="miniTag">必須</div>
-              <div class="upTitle">表面</div>
-            </div>
-            <input id="licFront" type="file" accept="image/*" />
-            <img id="licFrontPrev" class="preview" alt="" />
-          </div>
-
-          <div class="upCard">
-            <div class="upTop">
-              <div class="miniTag gray">任意</div>
-              <div class="upTitle">裏面</div>
-            </div>
-            <input id="licBack" type="file" accept="image/*" />
-            <img id="licBackPrev" class="preview" alt="" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 6 -->
-      <section class="step" data-step="6">
-        <div class="head">
-          <div class="badge b6">BANK</div>
-          <h1>銀行振込先</h1>
-          <p>報酬支払いのために必要です。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>銀行名</label>
-            <input id="bank" type="text" placeholder="〇〇銀行" />
-          </div>
-
-          <div class="field">
-            <label>支店名</label>
-            <input id="branch" type="text" placeholder="〇〇支店" />
-          </div>
-
-          <div class="field">
-            <label>口座種別</label>
-            <select id="acctType">
-              <option value="">選択してください</option>
-              <option>普通</option>
-              <option>当座</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>口座番号</label>
-            <input id="acctNo" type="text" inputmode="numeric" placeholder="1234567" />
-          </div>
-
-          <div class="field">
-            <label>口座名義（カナ）</label>
-            <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 7 -->
-      <section class="step" data-step="7">
-        <div class="head">
-          <div class="badge b7">TERMS</div>
-          <h1>登録規約</h1>
-          <p>内容を確認し、同意して次へ進んでください。</p>
-        </div>
-
-        <div class="termsBox">
-          <ul>
-            <li>本登録はドライバー本人が行うものとします。</li>
-            <li>入力内容および提出書類は正確な情報であることを保証してください。</li>
-            <li>虚偽申告・不正が判明した場合、登録・契約をお断りする場合があります。</li>
-            <li>取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。</li>
-            <li>登録後、OFA GROUP担当者より連絡を行い案件を決定します。</li>
-          </ul>
-        </div>
-
-        <!-- ✅ 縦になる問題を解決：横並び + 自動折返し -->
-        <label class="agreeRow">
-          <input id="agree" type="checkbox" />
-          <span class="agreeText">上記内容に同意します</span>
-        </label>
-
-        <div class="note">
-          ※ 同意チェックがない場合、次へ進めません。
-        </div>
-      </section>
-
-      <!-- STEP 8 -->
-      <section class="step" data-step="8">
-        <div class="head">
-          <div class="badge b8">DONE</div>
-          <h1>登録完了</h1>
-          <p>
-            ① 登録内容をPDFで作成<br />
-            ② <b>OFAメンバーシップLINE</b>にPDFを添付して送信してください
-          </p>
-        </div>
-
-        <div class="ctaStack">
-          <button id="makePdfBtn" class="btnPrimary" type="button">
-            登録PDFを作成（保存）
-          </button>
-
-          <a id="lineLinkBtn" class="btnLine" href="#" target="_blank" rel="noreferrer">
-            OFAメンバーシップLINEを開く
-          </a>
-
-          <div class="subHelp">
-            ※ PDF作成後、LINEで「ファイル」からPDFを添付して送信してください。
-          </div>
-        </div>
-      </section>
-
-      <!-- Bottom Navigation -->
-      <div class="nav">
-        <button id="backBtn" class="btnGhost" type="button">戻る</button>
-        <button id="nextBtn" class="btnPrimary" type="button">次へ</button>
-      </div>
-
-      <div id="toast" class="toast"></div>
-    </main>
-
-    <footer class="foot">
-      <div class="footLeft">© OFA GROUP</div>
-      <div class="footRight">One for All, All for One</div>
-    </footer>
-  </div>
-
-  <script src="./app.js"></script>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    // dots
+    if (dots.length) {
+      dots.forEach((d, i) => {
+        d.classList.toggle("on", i === current - 1);
+      });
     }
-  </script>
-</body>
-</html>
+
+    // nav
+    if (backBtn) backBtn.disabled = current === 1;
+    if (nextBtn) {
+      nextBtn.style.display = current === steps.length ? "none" : "inline-flex";
+    }
+  }
+
+  function normalizeBirth(v) {
+    // date inputは YYYY-MM-DD
+    if (!v) return "";
+    if (v.includes("/")) {
+      const [y, m, d] = v.split("/");
+      if (y && m && d) return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+    return v;
+  }
+
+  function validateStep(stepNo) {
+    // 必須最小セット（止まる原因を確実に判定）
+    if (stepNo === 1) {
+      const birth = normalizeBirth($v("birth"));
+      if (!$v("name") || !$v("kana") || !$v("phone") || !$v("email") || !birth) {
+        return "STEP1：未入力があります（特に生年月日）";
+      }
+    }
+    if (stepNo === 2) {
+      if (!$v("zip") || !$v("pref") || !$v("city") || !$v("addr1")) {
+        return "STEP2：住所を入力してください";
+      }
+    }
+    if (stepNo === 3) {
+      if (!$v("affType")) return "STEP3：所属区分を選択してください";
+    }
+    if (stepNo === 4) {
+      if (!$v("vehicleType") || !$v("plate") || !$v("blackPlate")) {
+        return "STEP4：車両情報を入力してください";
+      }
+    }
+    if (stepNo === 5) {
+      if (!licFrontFile) return "STEP5：免許証（表面）は必須です";
+    }
+    if (stepNo === 6) {
+      if (!$v("bank") || !$v("branch") || !$v("acctType") || !$v("acctNo") || !$v("acctName")) {
+        return "STEP6：振込先情報を入力してください";
+      }
+    }
+    if (stepNo === 7) {
+      if (!agree?.checked) return "規約に同意してください";
+    }
+    return "";
+  }
+
+  function collectData() {
+    return {
+      name: $v("name"),
+      kana: $v("kana"),
+      phone: $v("phone"),
+      email: $v("email"),
+      birth: normalizeBirth($v("birth")),
+      zip: $v("zip"),
+      pref: $v("pref"),
+      city: $v("city"),
+      addr1: $v("addr1"),
+      addr2: $v("addr2"),
+      affType: $v("affType"),
+      company: $v("company"),
+      vehicleType: $v("vehicleType"),
+      plate: $v("plate"),
+      blackPlate: $v("blackPlate"),
+      bank: $v("bank"),
+      branch: $v("branch"),
+      acctType: $v("acctType"),
+      acctNo: $v("acctNo"),
+      acctName: $v("acctName"),
+    };
+  }
+
+  /* ---------- handlers ---------- */
+  nextBtn?.addEventListener("click", () => {
+    const msg = validateStep(current);
+    if (msg) return showToast(msg);
+    setStep(current + 1);
+  });
+
+  backBtn?.addEventListener("click", () => {
+    setStep(current - 1);
+  });
+
+  // 所属区分
+  segBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      segBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (affTypeHidden) affTypeHidden.value = btn.dataset.value || "";
+    });
+  });
+
+  // 免許プレビュー
+  function previewFile(file, imgEl) {
+    if (!file || !imgEl) return;
+    const url = URL.createObjectURL(file);
+    imgEl.src = url;
+    imgEl.style.display = "block";
+    imgEl.onload = () => URL.revokeObjectURL(url);
+  }
+
+  licFrontInput?.addEventListener("change", (e) => {
+    licFrontFile = e.target.files?.[0] || null;
+    previewFile(licFrontFile, licFrontPrev);
+  });
+
+  licBackInput?.addEventListener("change", (e) => {
+    licBackFile = e.target.files?.[0] || null;
+    previewFile(licBackFile, licBackPrev);
+  });
+
+  // LINEリンク
+  if (lineLinkBtn) lineLinkBtn.href = LINE_MEMBERSHIP_URL;
+
+  /* ---------- PDF ---------- */
+  async function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  async function makePdfViaApi() {
+    if (!API_PDF_URL) {
+      showToast("PDF APIが未設定です（API_PDF_URLを設定してください）");
+      return;
+    }
+
+    // 1〜7全部チェック
+    for (let i = 1; i <= 7; i++) {
+      const msg = validateStep(i);
+      if (msg) {
+        setStep(i);
+        showToast(msg);
+        return;
+      }
+    }
+
+    showToast("PDF作成中…");
+
+    const data = collectData();
+    const fd = new FormData();
+    fd.append("data", JSON.stringify(data));
+    fd.append("licFront", licFrontFile);
+    if (licBackFile) fd.append("licBack", licBackFile);
+
+    const res = await fetch(API_PDF_URL, { method: "POST", body: fd });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error(text);
+      showToast("PDF作成失敗（API/フォント設定を確認）");
+      return;
+    }
+
+    const blob = await res.blob();
+    const ymd = new Date().toISOString().slice(0, 10);
+    await downloadBlob(blob, `OFA_登録_${data.name || "driver"}_${ymd}.pdf`);
+    showToast("PDFを保存しました。LINEへ送信してください");
+  }
+
+  // jsPDF単体は日本語が文字化けしやすいので「最終手段」扱い
+  async function makePdfFallbackJsPdf() {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) return showToast("jsPDFが読み込めていません");
+
+    // 1〜7全部チェック
+    for (let i = 1; i <= 7; i++) {
+      const msg = validateStep(i);
+      if (msg) {
+        setStep(i);
+        showToast(msg);
+        return;
+      }
+    }
+
+    showToast("PDF作成中…（日本語が文字化けする可能性あり）");
+
+    const data = collectData();
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+    // ※日本語フォント未埋め込みだと文字化けします
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(14);
+    doc.text("OFA GROUP Driver Entry", 40, 50);
+
+    doc.setFontSize(10);
+    const lines = [
+      `Name: ${data.name}`,
+      `Kana: ${data.kana}`,
+      `Phone: ${data.phone}`,
+      `Email: ${data.email}`,
+      `Birth: ${data.birth}`,
+      `Address: ${data.zip} ${data.pref}${data.city}${data.addr1} ${data.addr2}`,
+      `Affiliation: ${data.affType} / ${data.company}`,
+      `Vehicle: ${data.vehicleType} / ${data.plate} / ${data.blackPlate}`,
+      `Bank: ${data.bank} ${data.branch} ${data.acctType} ${data.acctNo} ${data.acctName}`,
+    ];
+
+    let y = 80;
+    lines.forEach((t) => {
+      doc.text(t, 40, y);
+      y += 14;
+    });
+
+    doc.save("OFA_Entry.pdf");
+    showToast("PDFを保存しました。LINEへ送信してください");
+  }
+
+  makePdfBtn?.addEventListener("click", async () => {
+    // APIがあるならAPI優先（日本語100%）
+    if (API_PDF_URL) return makePdfViaApi();
+    return makePdfFallbackJsPdf();
+  });
+
+  // 初期表示
+  setStep(1);
+});
