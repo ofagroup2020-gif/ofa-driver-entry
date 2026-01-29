@@ -1,397 +1,738 @@
-(() => {
-  const steps = Array.from(document.querySelectorAll(".step"));
-  let cur = 0;
+/* =========================================================
+   OFA GROUP Driver Registration App - app.js (FULL REPLACE)
+   - STEP4: 車種 + 黒ナンバー状況(あり/なし/申請中/リース希望)のみ
+   - LINE: OFAメンバーシップLINE https://lin.ee/8x437Vt
+   - 導線: LINE追加(開く) → PDF作成
+   - 免許証画像: 上下の余白を自動カットしてPDF出力を見やすく
+   ========================================================= */
 
-  const stepNo = document.getElementById("stepNo");
-  const bar = document.getElementById("bar");
-  const dots = document.getElementById("dots");
-  const toast = document.getElementById("toast");
+/* -------------------------
+   0) 設定
+------------------------- */
+const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/8x437Vt";
 
-  // inputs
-  const $ = (id) => document.getElementById(id);
+// STEP4 options
+const VEHICLE_TYPES = ["軽バン", "軽トラ", "幌車", "クール車", "その他"];
+const BLACK_STATUS = ["あり", "なし", "申請中", "リース希望"];
 
-  const name = $("name");
-  const kana = $("kana");
-  const phone = $("phone");
-  const email = $("email");
-  const birth = $("birth");
+/* -------------------------
+   1) ユーティリティ
+------------------------- */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const zip = $("zip");
-  const pref = $("pref");
-  const city = $("city");
-  const addr1 = $("addr1");
-  const addr2 = $("addr2");
+function showToast(msg, ms = 2200) {
+  const t = $("#toast");
+  if (!t) {
+    alert(msg);
+    return;
+  }
+  t.textContent = msg;
+  t.classList.add("show");
+  window.clearTimeout(showToast._tm);
+  showToast._tm = window.setTimeout(() => t.classList.remove("show"), ms);
+}
 
-  const aff = $("aff");
-  const affCompany = $("affCompany");
+function normalizePhone(v) {
+  if (!v) return "";
+  // 全角→半角の簡易
+  const s = String(v).replace(/[０-９＋－ー]/g, (c) => {
+    const map = { "＋": "+", "－": "-", "ー": "-" };
+    if (map[c]) return map[c];
+    return String.fromCharCode(c.charCodeAt(0) - 65248);
+  });
+  // 数字 + + -
+  return s.replace(/[^\d+\-]/g, "");
+}
 
-  const carType = $("carType");
-  const carNo = $("carNo");
-  const blackNo = $("blackNo");
+function isValidEmail(v) {
+  if (!v) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
 
-  const bank = $("bank");
-  const branch = $("branch"); // ← 入力は残してる（必要なら後で消してOK）
-  const accType = $("accType");
-  const accNo = $("accNo");
-  const accNameKana = $("accNameKana");
+function todayISO() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
-  const licF = $("licF");
-  const licB = $("licB");
-  const prevF = $("prevF");
-  const prevB = $("prevB");
+function nowStamp() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(
+    d.getHours()
+  )}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
 
-  const agree = $("agree");
+/* -------------------------
+   2) 状態管理 (localStorage)
+------------------------- */
+const LS_KEY = "ofa_driver_entry_v1";
 
-  const pdfBtn = $("pdfBtn");
-  const restart = $("restart");
+const state = {
+  step: 1,
+  // STEP1
+  nameKanji: "",
+  nameKana: "",
+  phone: "",
+  email: "",
+  birth: "",
+  // STEP2
+  address: "",
+  // STEP3 所属（協力会社/FC/個人 など。UIがある場合だけ拾う）
+  affiliationType: "",
+  affiliationCompany: "",
+  // STEP4 車両（あなたの仕様）
+  vehicleType: "",
+  blackStatus: "",
+  carNumber: "", // 任意（UIがあれば）
+  // STEP5 口座
+  bankName: "",
+  accountType: "",
+  accountNumber: "",
+  accountNameKana: "",
+  // STEP6 画像
+  licenseFront: "", // オリジナルDataURL
+  licenseBack: "",
+  licenseFrontCropped: "", // 上下余白カット後DataURL（PDF用）
+  licenseBackCropped: "",
+  // STEP7 同意
+  agree: false,
+  // LINE導線
+  lineOpened: false,
+};
 
-  // PDF hidden nodes
-  const pdfPaper = $("pdfPaper");
-  const pdfGrid = $("pdfGrid");
-  const pdfDate = $("pdfDate");
-  const pdfImgF = $("pdfImgF");
-  const pdfImgB = $("pdfImgB");
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    Object.assign(state, obj || {});
+  } catch (_) {}
+}
 
-  // -------- UI: dots ----------
-  function renderDots() {
-    dots.innerHTML = "";
-    for (let i = 0; i < 8; i++) {
-      const d = document.createElement("div");
-      d.className = "d" + (i === cur ? " on" : "");
-      dots.appendChild(d);
-    }
+function saveState() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch (_) {}
+}
+
+function resetAll() {
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+}
+
+/* -------------------------
+   3) DOM紐付け（柔軟）
+   ※ index.html の id/name が多少違っても拾えるように
+------------------------- */
+const bindMap = [
+  // STEP1
+  ["nameKanji", ["#nameKanji", "#fullName", "input[name='nameKanji']", "input[name='fullName']"]],
+  ["nameKana", ["#nameKana", "#furigana", "input[name='nameKana']", "input[name='furigana']"]],
+  ["phone", ["#phone", "#tel", "input[name='phone']", "input[name='tel']"]],
+  ["email", ["#email", "input[name='email']"]],
+  ["birth", ["#birth", "#dob", "input[name='birth']", "input[name='dob']"]],
+  // STEP2
+  ["address", ["#address", "input[name='address']", "textarea[name='address']"]],
+  // STEP3
+  ["affiliationType", ["#affiliationType", "select[name='affiliationType']"]],
+  ["affiliationCompany", ["#affiliationCompany", "input[name='affiliationCompany']"]],
+  // STEP4（必須2つ）
+  ["vehicleType", ["#vehicleType", "select[name='vehicleType']"]],
+  ["blackStatus", ["#blackStatus", "select[name='blackStatus']"]],
+  ["carNumber", ["#carNumber", "input[name='carNumber']"]],
+  // STEP5
+  ["bankName", ["#bankName", "input[name='bankName']"]],
+  ["accountType", ["#accountType", "select[name='accountType']"]],
+  ["accountNumber", ["#accountNumber", "input[name='accountNumber']"]],
+  ["accountNameKana", ["#accountNameKana", "input[name='accountNameKana']"]],
+  // STEP7
+  ["agree", ["#agree", "input[name='agree']"]],
+];
+
+function findEl(selectors) {
+  for (const sel of selectors) {
+    const el = $(sel);
+    if (el) return el;
+  }
+  return null;
+}
+
+const els = {}; // stateKey -> element
+function bindElements() {
+  for (const [key, selectors] of bindMap) {
+    els[key] = findEl(selectors);
+  }
+}
+
+/* -------------------------
+   4) STEP表示・進行
+------------------------- */
+function setStep(n) {
+  const steps = $$(".step");
+  if (!steps.length) {
+    state.step = n;
+    saveState();
+    return;
+  }
+  const max = steps.length;
+  const next = Math.max(1, Math.min(max, n));
+  state.step = next;
+  steps.forEach((s, i) => s.classList.toggle("active", i === next - 1));
+
+  updateProgressUI(next, max);
+  saveState();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function updateProgressUI(step, max) {
+  // bar
+  const fill = $(".barFill");
+  if (fill) fill.style.width = `${(step / max) * 100}%`;
+
+  // dots
+  const dots = $$(".dots .d");
+  if (dots.length) {
+    dots.forEach((d, i) => d.classList.toggle("on", i === step - 1));
   }
 
-  function show() {
-    steps.forEach((s) => s.classList.remove("active"));
-    steps[cur].classList.add("active");
+  // STEP label (top right)
+  const stepLabel = $("#stepLabel");
+  if (stepLabel) stepLabel.textContent = `STEP ${step} / ${max}`;
+}
 
-    stepNo.textContent = String(cur + 1);
-    bar.style.width = ((cur + 1) / 8) * 100 + "%";
-    renderDots();
+function nextStep() {
+  if (!validateStep(state.step)) return;
+  setStep(state.step + 1);
+}
+function prevStep() {
+  setStep(state.step - 1);
+}
 
-    // topへスクロール
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+/* -------------------------
+   5) バリデーション（次へ進めないバグ潰し）
+------------------------- */
+function validateStep(step) {
+  // 画面に存在する要素だけを必須チェック（UI差異で詰まない）
+  if (step === 1) {
+    const n1 = (state.nameKanji || "").trim();
+    const n2 = (state.nameKana || "").trim();
+    const p = normalizePhone(state.phone);
+    const e = (state.email || "").trim();
+    const b = (state.birth || "").trim();
 
-  // -------- helpers ----------
-  function toastShow(msg) {
-    toast.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 1600);
-  }
+    if (!n1) return showToast("氏名（漢字）を入力してください"), false;
+    if (!n2) return showToast("フリガナを入力してください"), false;
+    if (!p || p.length < 8) return showToast("電話番号を正しく入力してください"), false;
+    if (!isValidEmail(e)) return showToast("メールアドレスを正しく入力してください"), false;
+    if (!b) return showToast("生年月日を入力してください"), false;
 
-  function cleanPhone(v) {
-    return (v || "").replace(/[^\d+]/g, "");
-  }
-
-  function isEmail(v) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || "");
-  }
-
-  function need(v) {
-    return (v || "").trim().length > 0;
-  }
-
-  // -------- validation per step ----------
-  function validateStep(stepIndex) {
-    const s = stepIndex + 1;
-
-    if (s === 1) {
-      if (!need(name.value)) return alert("氏名（漢字）を入力してください"), false;
-      if (!need(kana.value)) return alert("フリガナを入力してください"), false;
-      if (!need(phone.value)) return alert("電話番号を入力してください"), false;
-      if (!isEmail(email.value)) return alert("メールアドレスが正しくありません"), false;
-      if (!need(birth.value)) return alert("生年月日を入力してください"), false;
-    }
-
-    if (s === 2) {
-      if (!need(pref.value)) return alert("都道府県を入力してください"), false;
-      if (!need(city.value)) return alert("市区町村を入力してください"), false;
-      if (!need(addr1.value)) return alert("番地を入力してください"), false;
-    }
-
-    if (s === 4) {
-      if (!need(carType.value)) return alert("車種を選択してください"), false;
-      if (!need(carNo.value)) return alert("車両ナンバーを入力してください"), false;
-      if (!need(blackNo.value)) return alert("黒ナンバーを選択してください"), false;
-    }
-
-    if (s === 5) {
-      if (!need(bank.value)) return alert("銀行を入力してください"), false;
-      if (!need(accType.value)) return alert("口座種別を選択してください"), false;
-      if (!need(accNo.value)) return alert("口座番号を入力してください"), false;
-      if (!need(accNameKana.value)) return alert("口座名義（カナ）を入力してください"), false;
-    }
-
-    if (s === 6) {
-      if (!licF.files?.[0]) return alert("免許証 表面（必須）をアップロードしてください"), false;
-    }
-
-    if (s === 7) {
-      if (!agree.checked) return alert("同意が必要です"), false;
-    }
-
+    // 反映（正規化）
+    state.phone = p;
     return true;
   }
 
-  function goNext() {
-    if (!validateStep(cur)) return;
-    if (cur < 7) cur++;
-    show();
-  }
-
-  function goBack() {
-    if (cur > 0) cur--;
-    show();
-  }
-
-  // -------- button wiring（各STEPごとに） ----------
-  // STEP1
-  $("next").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP2
-  $("next2").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back2").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP3
-  $("next3").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back3").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP4
-  $("next4").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back4").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP5
-  $("next5").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back5").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP6
-  $("next6").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back6").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP7
-  $("next7").addEventListener("click", (e) => { e.preventDefault(); goNext(); });
-  $("back7").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-
-  // STEP8
-  $("back8").addEventListener("click", (e) => { e.preventDefault(); goBack(); });
-  restart.addEventListener("click", () => { cur = 0; show(); });
-
-  // -------- affiliation buttons ----------
-  document.querySelectorAll(".segBtn").forEach((b) => {
-    b.addEventListener("click", () => {
-      document.querySelectorAll(".segBtn").forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-      aff.value = b.dataset.val || "";
-    });
-  });
-
-  // -------- preview ----------
-  function setPreview(file, imgEl) {
-    if (!file) {
-      imgEl.style.display = "none";
-      imgEl.removeAttribute("src");
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    imgEl.src = url;
-    imgEl.style.display = "block";
-    imgEl.onload = () => URL.revokeObjectURL(url);
-  }
-
-  licF.addEventListener("change", () => setPreview(licF.files?.[0], prevF));
-  licB.addEventListener("change", () => setPreview(licB.files?.[0], prevB));
-
-  // -------- PDF: 免許証「上下余白だけ」自動カット ----------
-  async function cropTopBottomOnly(file){
-    const img = await fileToImage(file);
-    const { canvas, ctx } = makeCanvas(img.naturalWidth, img.naturalHeight);
-    ctx.drawImage(img, 0, 0);
-
-    const w = canvas.width;
-    const h = canvas.height;
-
-    const isBg = (r,g,b,a) => a < 20 || (r > 235 && g > 235 && b > 235);
-
-    const data = ctx.getImageData(0,0,w,h).data;
-
-    const rowHasContent = (y) => {
-      let cnt = 0;
-      const threshold = Math.max(30, Math.floor(w * 0.02));
-      for(let x=0; x<w; x++){
-        const i = (y*w + x) * 4;
-        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-        if(!isBg(r,g,b,a)) cnt++;
-        if(cnt > threshold) return true;
-      }
+  if (step === 2) {
+    if (els.address && !(state.address || "").trim()) {
+      showToast("住所を入力してください");
       return false;
+    }
+    return true;
+  }
+
+  // STEP3 所属（UIがある場合だけ）
+  if (step === 3) {
+    if (els.affiliationType && !(state.affiliationType || "").trim()) {
+      showToast("所属区分を選択してください");
+      return false;
+    }
+    // 会社名は任意（協力会社の時だけ必要にしたいなら、ここで分岐可）
+    return true;
+  }
+
+  // STEP4（あなたの最終仕様）
+  if (step === 4) {
+    if (!state.vehicleType) {
+      showToast("車種を選択してください");
+      return false;
+    }
+    if (!state.blackStatus) {
+      showToast("黒ナンバー状況を選択してください");
+      return false;
+    }
+    return true;
+  }
+
+  // STEP5 口座（UIがある場合だけ）
+  if (step === 5) {
+    if (els.bankName && !(state.bankName || "").trim()) return showToast("銀行名を入力してください"), false;
+    if (els.accountType && !(state.accountType || "").trim()) return showToast("口座種別を選択してください"), false;
+    if (els.accountNumber && !(state.accountNumber || "").trim()) return showToast("口座番号を入力してください"), false;
+    if (els.accountNameKana && !(state.accountNameKana || "").trim()) return showToast("口座名義（カナ）を入力してください"), false;
+    return true;
+  }
+
+  // STEP6 免許証（フロント必須、バック任意）
+  if (step === 6) {
+    if (!state.licenseFront) return showToast("免許証（表）をアップロードしてください"), false;
+    return true;
+  }
+
+  // STEP7 同意
+  if (step === 7) {
+    if (els.agree && !state.agree) return showToast("同意にチェックしてください"), false;
+    return true;
+  }
+
+  return true;
+}
+
+/* -------------------------
+   6) UI初期化：select の選択肢を注入
+------------------------- */
+function ensureOptions(selectEl, options, placeholder = "選択してください") {
+  if (!selectEl) return;
+
+  // すでに options が入っているなら壊さない（ただしSTEP4は上書き）
+  const isVehicle = selectEl === els.vehicleType;
+  const isBlack = selectEl === els.blackStatus;
+  if (!isVehicle && !isBlack && selectEl.options && selectEl.options.length > 1) return;
+
+  // 上書き
+  selectEl.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = placeholder;
+  selectEl.appendChild(opt0);
+
+  options.forEach((v) => {
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = v;
+    selectEl.appendChild(o);
+  });
+}
+
+/* -------------------------
+   7) 入力イベント
+------------------------- */
+function syncStateToUI() {
+  for (const [key, el] of Object.entries(els)) {
+    if (!el) continue;
+    if (el.type === "checkbox") {
+      el.checked = !!state[key];
+    } else {
+      el.value = state[key] ?? "";
+    }
+  }
+
+  // 免許証プレビュー
+  const p1 = $("#previewLicenseFront");
+  const p2 = $("#previewLicenseBack");
+  if (p1 && state.licenseFront) {
+    p1.src = state.licenseFront;
+    p1.style.display = "block";
+  }
+  if (p2 && state.licenseBack) {
+    p2.src = state.licenseBack;
+    p2.style.display = "block";
+  }
+
+  // DONE画面：LINEボタン注入
+  const lineBtn = $("#btnOpenLine");
+  if (lineBtn) {
+    lineBtn.textContent = state.lineOpened ? "OFAメンバーシップLINEを開く（追加済み）" : "OFAメンバーシップLINEを追加/開く";
+  }
+}
+
+function wireInputs() {
+  for (const [key, el] of Object.entries(els)) {
+    if (!el) continue;
+
+    const handler = () => {
+      if (el.type === "checkbox") {
+        state[key] = !!el.checked;
+      } else {
+        state[key] = el.value;
+      }
+      if (key === "phone") state.phone = normalizePhone(state.phone);
+      saveState();
     };
 
-    let top = 0;
-    while(top < h-1 && !rowHasContent(top)) top++;
+    el.addEventListener("input", handler);
+    el.addEventListener("change", handler);
+  }
 
-    let bottom = h-1;
-    while(bottom > 0 && !rowHasContent(bottom)) bottom--;
+  // Next/Prev
+  const btnNext = $("#btnNext");
+  const btnPrev = $("#btnPrev");
+  if (btnNext) btnNext.addEventListener("click", nextStep);
+  if (btnPrev) btnPrev.addEventListener("click", prevStep);
 
-    const margin = Math.floor(h * 0.02);
-    top = Math.max(0, top - margin);
-    bottom = Math.min(h-1, bottom + margin);
+  // DONE画面のボタン
+  const btnOpenLine = $("#btnOpenLine");
+  if (btnOpenLine) btnOpenLine.addEventListener("click", openMembershipLine);
 
-    const cropH = Math.max(1, bottom - top + 1);
-    if(cropH < h * 0.4){
-      return await fileToDataURL(file);
+  const btnMakePdf = $("#btnMakePdf");
+  if (btnMakePdf) btnMakePdf.addEventListener("click", createPdfAndDownload);
+
+  const btnRestart = $("#btnRestart");
+  if (btnRestart) btnRestart.addEventListener("click", resetAll);
+
+  // 免許証アップロード
+  const fileFront = $("#fileLicenseFront");
+  const fileBack = $("#fileLicenseBack");
+  if (fileFront) fileFront.addEventListener("change", (e) => handleImageUpload(e, "front"));
+  if (fileBack) fileBack.addEventListener("change", (e) => handleImageUpload(e, "back"));
+}
+
+/* -------------------------
+   8) 免許証画像：上下余白カット（PDF見やすく）
+   - “余白カットだけ”を狙うため、画像の上下を自動検出しトリミング
+   - ざっくりでも「黒い背景」「大きい余白」に強い
+------------------------- */
+async function handleImageUpload(e, side) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("画像ファイルを選択してください");
+    e.target.value = "";
+    return;
+  }
+
+  const dataUrl = await fileToDataURL(file);
+
+  if (side === "front") {
+    state.licenseFront = dataUrl;
+    state.licenseFrontCropped = await autoCropVerticalPadding(dataUrl);
+  } else {
+    state.licenseBack = dataUrl;
+    state.licenseBackCropped = await autoCropVerticalPadding(dataUrl);
+  }
+
+  saveState();
+  syncStateToUI();
+  showToast("画像を保存しました");
+}
+
+function fileToDataURL(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/**
+ * 自動縦トリム（上下余白を削る）
+ * - 画像を縮小して走査 → 上下の“内容がある範囲”を推定 → 元サイズで切り出し
+ */
+async function autoCropVerticalPadding(dataUrl) {
+  const img = await loadImage(dataUrl);
+
+  // 縮小して解析
+  const maxW = 520;
+  const scale = Math.min(1, maxW / img.width);
+  const w = Math.max(1, Math.floor(img.width * scale));
+  const h = Math.max(1, Math.floor(img.height * scale));
+
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const { data } = ctx.getImageData(0, 0, w, h);
+
+  // 行ごとの“情報量”を測る（輝度のばらつき + エッジっぽさ）
+  const rowScore = new Array(h).fill(0);
+
+  for (let y = 0; y < h; y++) {
+    let sum = 0;
+    let sum2 = 0;
+
+    // 横方向を間引き（軽く）
+    const step = Math.max(1, Math.floor(w / 180));
+    for (let x = 0; x < w; x += step) {
+      const i = (y * w + x) * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      sum += lum;
+      sum2 += lum * lum;
     }
 
-    const out = document.createElement("canvas");
-    out.width = w;
-    out.height = cropH;
-    const octx = out.getContext("2d");
-    octx.drawImage(canvas, 0, top, w, cropH, 0, 0, w, cropH);
+    const n = Math.ceil(w / step);
+    const mean = sum / n;
+    const varc = Math.max(0, sum2 / n - mean * mean);
 
-    return out.toDataURL("image/jpeg", 0.92);
+    // 低輝度一色(黒背景)だとvarが小さい → カット対象に
+    rowScore[y] = varc;
   }
 
-  function makeCanvas(w,h){
-    const c = document.createElement("canvas");
-    c.width = w; c.height = h;
-    return { canvas:c, ctx:c.getContext("2d") };
-  }
-  function fileToImage(file){
-    return new Promise((res, rej)=>{
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = ()=>{ URL.revokeObjectURL(url); res(img); };
-      img.onerror = (e)=>{ URL.revokeObjectURL(url); rej(e); };
-      img.src = url;
-    });
-  }
-  function fileToDataURL(file){
-    return new Promise((res, rej)=>{
-      const r = new FileReader();
-      r.onload = ()=>res(r.result);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
+  // 閾値：上位何%かを「内容あり」とみなす
+  const sorted = [...rowScore].sort((a, b) => a - b);
+  const p90 = sorted[Math.floor(sorted.length * 0.9)] || 0;
+  const threshold = Math.max(25, p90 * 0.20); // ほどよく
+
+  let top = 0;
+  while (top < h && rowScore[top] < threshold) top++;
+
+  let bottom = h - 1;
+  while (bottom > 0 && rowScore[bottom] < threshold) bottom--;
+
+  // 失敗時はそのまま
+  if (bottom - top < Math.floor(h * 0.2)) {
+    return dataUrl;
   }
 
-  // -------- PDF build helpers ----------
-  function pdfItem(label, value){
-    const div = document.createElement("div");
-    div.className = "pdfItem";
-    div.innerHTML = `<div class="pdfLabel">${escapeHtml(label)}</div><div class="pdfValue">${escapeHtml(value || "")}</div>`;
-    return div;
+  // 余白を少し残す（切り過ぎ防止）
+  const pad = Math.floor(h * 0.03);
+  top = Math.max(0, top - pad);
+  bottom = Math.min(h - 1, bottom + pad);
+
+  // 元画像で切り出し
+  const top0 = Math.floor(top / scale);
+  const bottom0 = Math.floor((bottom + 1) / scale);
+  const cropH0 = Math.max(1, bottom0 - top0);
+
+  const out = document.createElement("canvas");
+  out.width = img.width;
+  out.height = cropH0;
+
+  const octx = out.getContext("2d");
+  octx.drawImage(img, 0, top0, img.width, cropH0, 0, 0, img.width, cropH0);
+
+  // JPEG圧縮は軽く（PDF化しやすく）
+  return out.toDataURL("image/jpeg", 0.92);
+}
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+
+/* -------------------------
+   9) LINE：追加/開く
+------------------------- */
+function openMembershipLine() {
+  state.lineOpened = true;
+  saveState();
+  syncStateToUI();
+
+  // iOS/Android両対応：そのまま開く
+  window.open(OFA_MEMBERSHIP_LINE_URL, "_blank", "noopener,noreferrer");
+  showToast("OFAメンバーシップLINEを開きました");
+}
+
+/* -------------------------
+   10) 規約文（あなたの指定に差し替え）
+------------------------- */
+function injectTermsText() {
+  const box = $("#termsList");
+  if (!box) return;
+
+  const items = [
+    "内容を確認し、同意して次へ進んでください。",
+    "本登録はドライバー本人が行うものとします。",
+    "入力内容および提出書類は正確な情報であることを保証してください。",
+    "虚申告・不正が判明した場合、登録・契約をお断りする場合があります。",
+    "取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。",
+    "登録後、OFA GROUP担当者より連絡を行い案件を決定します。",
+  ];
+
+  box.innerHTML = items.map((t) => `<li>${escapeHtml(t)}</li>`).join("");
+}
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* -------------------------
+   11) PDF作成
+   - jsPDF + html2canvas が index.html に読み込み済み想定
+   - PDF用に #pdfPaper を埋めて、A4で出力
+   - 免許証画像は「上下余白カット済み」を貼る（サイズは維持）
+------------------------- */
+function fillPdfPaper() {
+  const paper = $("#pdfPaper");
+  if (!paper) return false;
+
+  // 日付
+  const dateEl = $("#pdfDate");
+  if (dateEl) dateEl.textContent = `作成日時：${new Date().toLocaleString("ja-JP")}`;
+
+  // 基本情報
+  setText("#pdf_nameKanji", state.nameKanji);
+  setText("#pdf_nameKana", state.nameKana);
+  setText("#pdf_phone", state.phone);
+  setText("#pdf_email", state.email);
+  setText("#pdf_birth", state.birth);
+
+  // 住所
+  setText("#pdf_address", state.address);
+
+  // 所属
+  setText("#pdf_affiliationType", state.affiliationType);
+  setText("#pdf_affiliationCompany", state.affiliationCompany);
+
+  // 車両（STEP4）
+  setText("#pdf_vehicleType", state.vehicleType);
+  setText("#pdf_blackStatus", state.blackStatus);
+  setText("#pdf_carNumber", state.carNumber);
+
+  // 口座
+  setText("#pdf_bankName", state.bankName);
+  setText("#pdf_accountType", state.accountType);
+  setText("#pdf_accountNumber", state.accountNumber);
+  setText("#pdf_accountNameKana", state.accountNameKana);
+
+  // 免許証画像（PDF用：トリム版）
+  const imgFront = $("#pdf_licenseFront");
+  const imgBack = $("#pdf_licenseBack");
+  if (imgFront) imgFront.src = state.licenseFrontCropped || state.licenseFront || "";
+  if (imgBack) imgBack.src = state.licenseBackCropped || state.licenseBack || "";
+
+  // 補足（LINE）
+  const note = $("#pdfFooterNote");
+  if (note) {
+    note.textContent = "このPDFを「OFAメンバーシップLINE」へ添付して送信してください。";
   }
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
+  return true;
+
+  function setText(sel, v) {
+    const el = $(sel);
+    if (el) el.textContent = (v || "").trim();
+  }
+}
+
+async function createPdfAndDownload() {
+  // 導線：LINEを先に踏ませたい
+  if (!state.lineOpened) {
+    showToast("先に「OFAメンバーシップLINE」を追加/開いてください");
+    return;
   }
 
-  function makeDateStr(){
-    const d = new Date();
-    const pad = (n)=> String(n).padStart(2,"0");
-    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  // ライブラリチェック
+  if (typeof window.html2canvas !== "function" || typeof window.jspdf?.jsPDF !== "function") {
+    showToast("PDF生成ライブラリが読み込まれていません（index.html確認）");
+    return;
   }
 
-  async function makePdfAndOpen(){
-    // 1) PDF用DOMを埋める
-    pdfDate.textContent = "作成日時： " + makeDateStr();
-
-    pdfGrid.innerHTML = "";
-
-    // ★支店いらない → PDFには出さない（入力欄は残してるが出力しない）
-    const items = [
-      ["氏名（漢字）", name.value],
-      ["フリガナ", kana.value],
-      ["電話番号", cleanPhone(phone.value)],
-      ["メール", email.value],
-      ["生年月日", birth.value],
-      ["住所", `${zip.value ? zip.value + " " : ""}${pref.value}${city.value}${addr1.value}${addr2.value ? " " + addr2.value : ""}`],
-      ["所属区分", aff.value],                // 表示いらないと言ってたので、必要ならここを消してOK
-      ["所属会社名（任意）", affCompany.value],
-      ["車種", carType.value],
-      ["車両ナンバー", carNo.value],
-      ["黒ナンバー", blackNo.value],
-      ["銀行", bank.value],
-      ["口座種別", accType.value],
-      ["口座番号", accNo.value],
-      ["口座名義（カナ）", accNameKana.value],
-    ];
-
-    items.forEach(([l,v]) => pdfGrid.appendChild(pdfItem(l,v)));
-
-    // 免許証画像：上下余白だけカットして “縮小で読めない” を防ぐ
-    if(licF.files?.[0]) pdfImgF.src = await cropTopBottomOnly(licF.files[0]);
-    else pdfImgF.removeAttribute("src");
-
-    if(licB.files?.[0]) pdfImgB.src = await cropTopBottomOnly(licB.files[0]);
-    else pdfImgB.removeAttribute("src");
-
-    // 2) html2canvas → jsPDF
-    const { jsPDF } = window.jspdf;
-
-    const canvas = await html2canvas(pdfPaper, {
-      scale: 2,          // 文字と免許証をくっきり
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-    });
-
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-
-    // canvas(px)→PDF(mm) fit
-    const imgW = pageW;
-    const imgH = (canvas.height * imgW) / canvas.width;
-
-    let y = 0;
-    if (imgH <= pageH) {
-      pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH, "", "FAST");
-    } else {
-      // 複数ページ対応
-      let remaining = imgH;
-      let position = 0;
-      while (remaining > 0) {
-        pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH, "", "FAST");
-        remaining -= pageH;
-        if (remaining > 0) {
-          pdf.addPage();
-          position -= pageH;
-        }
-      }
-    }
-
-    // 3) 端末差対策：blob URL で新しいタブに開く（Safari/Chrome）
-    const blob = pdf.output("blob");
-    const blobUrl = URL.createObjectURL(blob);
-
-    // まずは“開く”を優先（印刷・共有が同じボタンに乗る）
-    window.open(blobUrl, "_blank");
-
-    // ついでにDLも試みる（出ない端末は開くだけになる）
-    try{
-      pdf.save(`OFA_driver_entry_${makeDateStr().replace(/[\/: ]/g,"")}.pdf`);
-    }catch(e){}
-
-    toastShow("PDFを開きました（保存・共有・印刷OK）");
+  const ok = fillPdfPaper();
+  if (!ok) {
+    showToast("PDFテンプレート(#pdfPaper)が見つかりません");
+    return;
   }
 
-  // PDFボタン
-  pdfBtn.addEventListener("click", async () => {
-    // STEP8で押された前提だけど、念のため最終チェック
-    if (!licF.files?.[0]) return alert("免許証 表面（必須）がありません");
-    await makePdfAndOpen();
+  showToast("PDFを作成中…", 2800);
+
+  // 画像読み込みを少し待つ
+  await waitImagesLoaded(["#pdf_licenseFront", "#pdf_licenseBack"]);
+
+  const paper = $("#pdfPaper");
+
+  // html2canvas でA4相当をキャプチャ
+  const canvas = await window.html2canvas(paper, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
   });
 
-  // 初期表示
-  show();
-})();
+  const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "pt", "a4");
+
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+
+  // 画像をA4にフィット
+  const imgW = canvas.width;
+  const imgH = canvas.height;
+  const ratio = Math.min(pageW / imgW, pageH / imgH);
+  const w = imgW * ratio;
+  const h = imgH * ratio;
+  const x = (pageW - w) / 2;
+  const y = (pageH - h) / 2;
+
+  pdf.addImage(imgData, "JPEG", x, y, w, h, undefined, "FAST");
+
+  const filename = `OFA_driver_entry_${nowStamp()}.pdf`;
+  pdf.save(filename);
+
+  showToast("PDFを保存しました");
+}
+
+function waitImagesLoaded(selectors) {
+  const imgs = selectors.map((s) => $(s)).filter(Boolean);
+  return Promise.all(
+    imgs.map(
+      (img) =>
+        new Promise((res) => {
+          if (!img.src) return res();
+          if (img.complete) return res();
+          img.onload = () => res();
+          img.onerror = () => res();
+        })
+    )
+  );
+}
+
+/* -------------------------
+   12) 初期化
+------------------------- */
+function init() {
+  loadState();
+  bindElements();
+
+  // STEP4 select の選択肢を強制的に統一
+  ensureOptions(els.vehicleType, VEHICLE_TYPES);
+  ensureOptions(els.blackStatus, BLACK_STATUS);
+
+  // 規約テキスト差し替え
+  injectTermsText();
+
+  // state -> UI
+  syncStateToUI();
+
+  // nav wiring
+  wireInputs();
+
+  // step復元
+  setStep(state.step || 1);
+
+  // 「次へ進めない」対策：Enterで次へ（フォーム送信される環境用）
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const active = document.activeElement;
+    if (!active) return;
+
+    // textareaはEnterを許可
+    if (active.tagName === "TEXTAREA") return;
+
+    const btnNext = $("#btnNext");
+    if (btnNext && !btnNext.disabled) {
+      e.preventDefault();
+      nextStep();
+    }
+  });
+
+  // デバッグ：Done画面に警告（URL未設定など）
+  // ※あなたのLINE URLは固定済みなので基本出ません
+  const dbg = $("#debugHint");
+  if (dbg) dbg.textContent = "";
+}
+
+document.addEventListener("DOMContentLoaded", init);
