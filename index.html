@@ -3,161 +3,151 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#ff7a00" />
   <title>OFA GROUP Driver Registration App</title>
-  <link rel="stylesheet" href="./style.css?v=20260129_1" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="./style.css" />
 </head>
-
 <body>
   <div class="bg" aria-hidden="true"></div>
 
-  <div class="app">
-    <!-- top -->
-    <div class="topbar">
+  <main class="app">
+    <header class="topbar">
       <div class="topLeft">
         <div class="logoWrap" id="logoWrap">
-          <!-- ロゴ画像があるなら public/ofa-logo.png などに差し替え -->
-          <img class="logoImg" id="logoImg" src="./public/ofa-logo.png" alt="OFA" onerror="this.style.display='none';document.getElementById('logoWrap').classList.add('logoFallback');" />
-          <div class="logoFallbackBadge">OFA</div>
+          <img class="logoImg" id="logoImg" src="./public/ofa-logo.png" alt="OFA" onerror="this.style.display='none';document.getElementById('logoWrap').classList.add('logoFallback')" />
+          <span class="logoFallbackBadge">OFA</span>
         </div>
-
         <div class="brand">
           <div class="brandName">OFA GROUP</div>
           <div class="brandSub">Driver Registration App</div>
         </div>
       </div>
 
-      <div class="chip">
+      <div class="chip" id="stepChip">
         <span class="dot"></span>
-        <span>STEP <span id="stepNo">1</span> / 8</span>
+        <span id="stepText">STEP 1 / 8</span>
       </div>
-    </div>
+    </header>
 
-    <!-- progress -->
-    <div class="progressZone">
-      <div class="progressBar">
-        <div class="barFill" id="bar"></div>
-      </div>
+    <section class="progressZone" aria-label="progress">
+      <div class="progressBar"><div class="barFill" id="barFill"></div></div>
       <div class="dots" id="dots"></div>
-    </div>
+    </section>
 
-    <!-- main card -->
-    <div class="card">
+    <section class="card">
       <!-- STEP 1 -->
-      <section class="step active" data-step="1">
+      <div class="step active" data-step="1">
         <div class="head">
-          <div class="badge b1">PROFILE</div>
+          <span class="badge b1">PROFILE</span>
           <h1>ドライバー基本情報</h1>
           <p>本登録はドライバーご本人が行ってください。</p>
         </div>
 
         <div class="grid">
           <div class="field">
-            <label for="name">氏名（漢字）</label>
-            <input id="name" placeholder="例）山田 太郎" autocomplete="name" />
+            <label for="nameKanji">氏名（漢字）</label>
+            <input id="nameKanji" type="text" placeholder="例）山田 太郎" autocomplete="name" />
           </div>
           <div class="field">
-            <label for="kana">フリガナ</label>
-            <input id="kana" placeholder="例）ヤマダ タロウ" />
+            <label for="nameKana">フリガナ</label>
+            <input id="nameKana" type="text" placeholder="例）ヤマダ タロウ" />
           </div>
+
           <div class="field">
             <label for="phone">電話番号</label>
-            <input id="phone" placeholder="090-xxxx-xxxx" inputmode="tel" autocomplete="tel" />
+            <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" inputmode="tel" />
           </div>
           <div class="field">
             <label for="email">メールアドレス</label>
-            <input id="email" placeholder="example@gmail.com" inputmode="email" autocomplete="email" />
+            <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" inputmode="email" />
           </div>
+
           <div class="field">
-            <label for="birth">生年月日</label>
-            <input id="birth" type="date" />
+            <label for="dob">生年月日</label>
+            <input id="dob" type="date" />
           </div>
         </div>
 
-        <div class="nav">
-          <button class="btnGhost" id="back" disabled>戻る</button>
-          <button class="btnPrimary" id="next">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack1">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext1">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 2 -->
-      <section class="step" data-step="2">
+      <div class="step" data-step="2">
         <div class="head">
-          <div class="badge b2">ADDRESS</div>
-          <h1>住所情報</h1>
-          <p>日本語で入力してください。</p>
+          <span class="badge b2">ADDRESS</span>
+          <h1>住所</h1>
+          <p>契約・連絡に必要な住所情報です。</p>
         </div>
 
         <div class="grid">
           <div class="field">
             <label for="zip">郵便番号</label>
-            <input id="zip" placeholder="例）890-0000" inputmode="numeric" />
+            <input id="zip" type="text" placeholder="例）890-0065" inputmode="numeric" />
           </div>
           <div class="field">
             <label for="pref">都道府県</label>
-            <input id="pref" placeholder="例）鹿児島県" />
+            <input id="pref" type="text" placeholder="例）鹿児島県" />
           </div>
+
           <div class="field">
             <label for="city">市区町村</label>
-            <input id="city" placeholder="例）鹿児島市" />
+            <input id="city" type="text" placeholder="例）鹿児島市" />
           </div>
           <div class="field">
-            <label for="addr1">番地</label>
-            <input id="addr1" placeholder="例）〇〇町1-2-3" />
-          </div>
-          <div class="field">
-            <label for="addr2">建物名（任意）</label>
-            <input id="addr2" placeholder="例）〇〇マンション101" />
+            <label for="addr1">番地・建物名</label>
+            <input id="addr1" type="text" placeholder="例）西千石町1-2-10 JRプレシア西千石2-212" />
           </div>
         </div>
 
-        <div class="nav">
-          <button class="btnGhost" id="back2">戻る</button>
-          <button class="btnPrimary" id="next2">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack2">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext2">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 3 -->
-      <section class="step" data-step="3">
+      <div class="step" data-step="3">
         <div class="head">
-          <div class="badge b3">AFFILIATION</div>
-          <h1>所属区分</h1>
-          <p>あなたの所属に近いものを選択してください。</p>
+          <span class="badge b3">AFFILIATION</span>
+          <h1>所属情報</h1>
+          <p>該当するものを選択してください（任意情報は空欄OK）。</p>
         </div>
 
-        <div class="seg" role="group" aria-label="所属区分">
-          <button type="button" class="segBtn active" data-val="協力会社">協力会社</button>
-          <button type="button" class="segBtn" data-val="FC">FC</button>
-          <button type="button" class="segBtn" data-val="個人">個人</button>
+        <div class="seg" role="tablist" aria-label="所属区分">
+          <button class="segBtn" type="button" data-aff="協力会社">協力会社</button>
+          <button class="segBtn" type="button" data-aff="FC">FC</button>
+          <button class="segBtn" type="button" data-aff="個人">個人</button>
         </div>
 
-        <!-- 表示いらない：値は hidden に保持だけ -->
-        <input id="aff" type="hidden" value="協力会社" />
-
-        <div class="mt">
+        <div class="grid mt">
           <div class="field">
             <label for="affCompany">所属会社名（任意）</label>
-            <input id="affCompany" placeholder="例）株式会社〇〇 / 〇〇運送など" />
+            <input id="affCompany" type="text" placeholder="株式会社〇〇 / 〇〇運送など" />
           </div>
         </div>
 
-        <div class="nav">
-          <button class="btnGhost" id="back3">戻る</button>
-          <button class="btnPrimary" id="next3">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack3">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext3">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 4 -->
-      <section class="step" data-step="4">
+      <div class="step" data-step="4">
         <div class="head">
-          <div class="badge b4">VEHICLE</div>
+          <span class="badge b4">VEHICLE</span>
           <h1>車両情報</h1>
           <p>稼働に必要な車両情報を入力してください。</p>
         </div>
 
         <div class="grid">
           <div class="field">
-            <label for="carType">車種</label>
-            <select id="carType">
+            <label for="vehicleType">車種</label>
+            <select id="vehicleType">
               <option value="">選択してください</option>
               <option value="軽バン">軽バン</option>
               <option value="軽トラ">軽トラ</option>
@@ -168,8 +158,8 @@
           </div>
 
           <div class="field">
-            <label for="carNo">車両ナンバー</label>
-            <input id="carNo" placeholder="例）鹿児島 480 さ 12-34" />
+            <label for="plate">車両ナンバー（任意）</label>
+            <input id="plate" type="text" placeholder="例）鹿児島 480 さ 12-34" />
           </div>
 
           <div class="field">
@@ -178,98 +168,95 @@
               <option value="">選択してください</option>
               <option value="あり">あり</option>
               <option value="なし">なし</option>
+              <option value="申請中">申請中</option>
+              <option value="リース希望">リース希望</option>
             </select>
           </div>
         </div>
 
-        <div class="nav">
-          <button class="btnGhost" id="back4">戻る</button>
-          <button class="btnPrimary" id="next4">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack4">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext4">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 5 -->
-      <section class="step" data-step="5">
+      <div class="step" data-step="5">
         <div class="head">
-          <div class="badge b5">BANK</div>
+          <span class="badge b5">BANK</span>
           <h1>口座情報</h1>
-          <p>報酬振込に使用します。</p>
+          <p>報酬の振込に使用します。</p>
         </div>
 
         <div class="grid">
           <div class="field">
             <label for="bank">銀行</label>
-            <input id="bank" placeholder="例）三井住友銀行" />
+            <input id="bank" type="text" placeholder="例）三井住友銀行" />
           </div>
           <div class="field">
-            <label for="branch">支店</label>
-            <input id="branch" placeholder="例）鹿児島支店" />
-          </div>
-          <div class="field">
-            <label for="accType">口座種別</label>
-            <select id="accType">
+            <label for="acctType">口座種別</label>
+            <select id="acctType">
               <option value="">選択してください</option>
               <option value="普通">普通</option>
               <option value="当座">当座</option>
             </select>
           </div>
+
           <div class="field">
-            <label for="accNo">口座番号</label>
-            <input id="accNo" placeholder="例）1234567" inputmode="numeric" />
+            <label for="acctNo">口座番号</label>
+            <input id="acctNo" type="text" inputmode="numeric" placeholder="例）1234567" />
           </div>
           <div class="field">
-            <label for="accNameKana">口座名義（カナ）</label>
-            <input id="accNameKana" placeholder="例）ヤマダ タロウ" />
+            <label for="acctNameKana">口座名義（カナ）</label>
+            <input id="acctNameKana" type="text" placeholder="例）ヤマダ タロウ" />
           </div>
         </div>
 
-        <div class="nav">
-          <button class="btnGhost" id="back5">戻る</button>
-          <button class="btnPrimary" id="next5">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack5">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext5">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 6 -->
-      <section class="step" data-step="6">
+      <div class="step" data-step="6">
         <div class="head">
-          <div class="badge b6">UPLOAD</div>
+          <span class="badge b6">UPLOAD</span>
           <h1>提出画像</h1>
-          <p>免許証は文字が読めるように撮影してください（推奨：横向き／手ブレなし）。</p>
+          <p>免許証は必須です。写真はそのままのサイズ感で、上下だけカットして見やすくPDFに出力します。</p>
         </div>
 
         <div class="uploadGrid">
           <div class="upCard">
             <div class="upTop">
               <div class="upTitle">免許証 表面（必須）</div>
-              <div class="miniTag">必須</div>
+              <span class="miniTag">必須</span>
             </div>
-            <input id="licF" type="file" accept="image/*" />
-            <img id="prevF" class="preview" alt="preview front" />
-            <div class="subHelp mt">
-              ※ PDFでは<strong>縮小せず</strong>、<strong>上下の余白だけ自動カット</strong>して見やすく出力します。
-            </div>
+            <input id="licFront" type="file" accept="image/*" />
+            <img id="licFrontPrev" class="preview" alt="preview front" />
+            <p class="subHelp">※横幅は最大で表示し、上下の余白のみ自動トリミングします。</p>
           </div>
 
           <div class="upCard">
             <div class="upTop">
               <div class="upTitle">免許証 裏面（任意）</div>
-              <div class="miniTag gray">任意</div>
+              <span class="miniTag gray">任意</span>
             </div>
-            <input id="licB" type="file" accept="image/*" />
-            <img id="prevB" class="preview" alt="preview back" />
+            <input id="licBack" type="file" accept="image/*" />
+            <img id="licBackPrev" class="preview" alt="preview back" />
           </div>
         </div>
 
-        <div class="nav">
-          <button class="btnGhost" id="back6">戻る</button>
-          <button class="btnPrimary" id="next6">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack6">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext6">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 7 -->
-      <section class="step" data-step="7">
+      <div class="step" data-step="7">
         <div class="head">
-          <div class="badge b7">TERMS</div>
+          <span class="badge b7">TERMS</span>
           <h1>確認事項</h1>
           <p>内容を確認し、同意して次へ進んでください。</p>
         </div>
@@ -284,91 +271,81 @@
           </ul>
         </div>
 
-        <label class="agreeRow" for="agree">
+        <label class="agreeRow">
           <input id="agree" type="checkbox" />
           <span class="agreeText">上記に同意します</span>
         </label>
+        <div class="note">※同意後「次へ」で完了画面に進みます。</div>
 
-        <div class="note">※ 同意後「次へ」で完了画面へ進みます。</div>
-
-        <div class="nav">
-          <button class="btnGhost" id="back7">戻る</button>
-          <button class="btnPrimary" id="next7">次へ</button>
+        <div class="nav actions">
+          <button class="btnGhost" type="button" id="btnBack7">戻る</button>
+          <button class="btnPrimary" type="button" id="btnNext7">次へ</button>
         </div>
-      </section>
+      </div>
 
       <!-- STEP 8 -->
-      <section class="step" data-step="8">
+      <div class="step" data-step="8">
         <div class="head">
-          <div class="badge b8">DONE</div>
+          <span class="badge b8">DONE</span>
           <h1>登録完了</h1>
-          <p>導線：<strong>① 先にOFAメンバーシップLINEを追加/開く → ② 登録PDFを作成（保存・共有・印刷） → ③ LINEへPDF送信</strong></p>
+          <p>
+            ① まず <b>OFAメンバーシップLINE</b> を追加（または開く）<br>
+            ② 次に <b>登録PDFを作成</b> して、<b>OFAメンバーシップLINE</b> に送信してください
+          </p>
         </div>
 
-        <div class="ctaStack">
-          <a class="btnLine" id="lineBtn" href="https://lin.ee/8x437Vt" target="_blank" rel="noopener">
-            OFAメンバーシップLINE追加 / 開く
-          </a>
-
-          <button class="btnPrimary" id="pdfBtn" type="button">
-            登録PDFを作成（保存・共有・印刷）
-          </button>
-
-          <div class="subHelp">
-            ※ PDF作成後、共有ボタンから「LINE」へ送信できます。印刷は共有→印刷でOK。<br/>
-            ※ 端末により自動ダウンロードしない場合は、PDFを<strong>新しいタブ</strong>で開きます。
-          </div>
+        <div class="ctaRow3 actions">
+          <button class="btnLine" type="button" id="btnOpenLine">OFAメンバーシップLINEを追加/開く</button>
+          <button class="btnPrimary" type="button" id="btnMakePdf">登録PDFを作成（保存・共有・印刷）</button>
+          <button class="btnGhost" type="button" id="btnRestart">最初から</button>
         </div>
 
-        <!-- 横3個ボタン -->
-        <div class="nav nav3">
-          <button class="btnGhost" id="back8">戻る</button>
-          <a class="btnLine btnLineMini" href="https://lin.ee/8x437Vt" target="_blank" rel="noopener">LINE</a>
-          <button class="btnPrimary" id="restart" type="button">最初から</button>
+        <div class="note">
+          ※LINE追加前だと共有先に表示されない場合があるため、先にLINE追加をお願いします。<br>
+          ※PDF作成後、共有ボタンから「LINE」へ送信できます。
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
     <div class="foot">
-      <div>© OFA GROUP</div>
-      <div>One for All, All for One</div>
+      <span>© OFA GROUP</span>
+      <span>One for All, All for One</span>
     </div>
-  </div>
+  </main>
 
-  <!-- toast -->
-  <div class="toast" id="toast">保存しました</div>
+  <div class="toast" id="toast"></div>
 
-  <!-- PDF用の紙（隠し） -->
-  <div class="pdfPaper" id="pdfPaper" aria-hidden="true">
+  <!-- PDF生成用（画面外） -->
+  <section class="pdfPaper" id="pdfPaper" aria-hidden="true">
     <div class="pdfHeader">
-      <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
-      <div class="pdfDate" id="pdfDate">作成日時：</div>
+      <div>
+        <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
+        <div class="pdfDate" id="pdfDate">作成日時：</div>
+      </div>
       <div class="pdfMotto">One for All, All for One</div>
     </div>
 
-    <div class="pdfGrid" id="pdfGrid">
-      <!-- JSで埋める -->
-    </div>
+    <div class="pdfGrid" id="pdfGrid"></div>
 
     <div class="pdfSectionTitle">提出画像</div>
     <div class="pdfImgGrid">
       <div class="pdfImgBox">
         <div class="pdfImgLabel">免許証 表面（必須）</div>
-        <img id="pdfImgF" alt="lic front" />
+        <img id="pdfLicFront" alt="license front" />
       </div>
       <div class="pdfImgBox">
         <div class="pdfImgLabel">免許証 裏面（任意）</div>
-        <img id="pdfImgB" alt="lic back" />
+        <img id="pdfLicBack" alt="license back" />
       </div>
     </div>
 
     <div class="pdfFooterNote">このPDFを「OFAメンバーシップLINE」へ添付して送信してください。</div>
-  </div>
+  </section>
 
   <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-  <script src="./app.js?v=20260129_1"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
