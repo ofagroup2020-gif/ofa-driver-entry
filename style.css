@@ -9,19 +9,18 @@
   --line:#00c300;
   --shadow: 0 18px 50px rgba(0,0,0,.18);
   --radius: 22px;
+  --radius2: 18px;
   --safeTop: env(safe-area-inset-top);
   --safeBottom: env(safe-area-inset-bottom);
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
-
 body{
   margin:0;
   font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   color:var(--text);
   overflow-x:hidden;
-  padding-bottom: calc(16px + var(--safeBottom)); /* iOS Safari 対策 */
 }
 
 .bg{
@@ -33,7 +32,6 @@ body{
     radial-gradient(700px 450px at 90% 85%, rgba(255,45,85,.45), transparent 60%),
     linear-gradient(135deg, rgba(255,245,235,.9), rgba(240,245,255,.9));
   filter:saturate(1.15);
-  pointer-events:none; /* ← Safariで透明レイヤーが被るのを防止 */
 }
 
 .app{
@@ -111,14 +109,8 @@ body{
   box-shadow: 0 6px 18px rgba(0,0,0,.18);
 }
 .dots{display:flex;gap:9px;justify-content:center;margin-top:12px}
-.d{
-  width:10px;height:10px;border-radius:999px;
-  background: rgba(255,255,255,.55);
-}
-.d.on{
-  width:18px;
-  background: radial-gradient(circle at 30% 30%, #ff7a00, #6a00ff);
-}
+.d{width:10px;height:10px;border-radius:999px;background: rgba(255,255,255,.55)}
+.d.on{width:18px;background: radial-gradient(circle at 30% 30%, #ff7a00, #6a00ff)}
 
 .card{
   margin-top:14px;
@@ -149,11 +141,7 @@ body{
 .b7{border-left:6px solid #00c300}
 .b8{border-left:6px solid #6a00ff}
 
-h1{
-  margin: 12px 0 6px;
-  font-size: 26px;
-  letter-spacing:.02em;
-}
+h1{margin: 12px 0 6px;font-size: 26px;letter-spacing:.02em}
 .head p{margin:0 0 10px;color:var(--muted);line-height:1.5}
 
 .step{display:none}
@@ -166,7 +154,6 @@ h1{
 }
 .field{display:flex;flex-direction:column;gap:6px}
 label{font-size:13px;color:#2a3242;font-weight:800}
-
 input,select{
   width:100%;
   padding: 14px 14px;
@@ -176,7 +163,6 @@ input,select{
   outline:none;
   font-size:15px;
   box-shadow: 0 10px 22px rgba(0,0,0,.05);
-  -webkit-appearance: none; /* Safari */
 }
 input:focus,select:focus{
   border-color: rgba(255,122,0,.45);
@@ -230,7 +216,7 @@ input:focus,select:focus{
   border-radius: 16px;
   border: 1px solid rgba(30,40,60,.12);
   object-fit: cover;
-  max-height: 280px;
+  max-height: 260px;
 }
 
 .termsBox{
@@ -256,9 +242,9 @@ input:focus,select:focus{
 .agreeText{font-weight:900;letter-spacing:.02em}
 .note{margin-top:8px;color:var(--muted);font-size:13px}
 
+.ctaStack{display:flex;flex-direction:column;gap:12px;margin-top:12px}
 .btnPrimary,.btnLine,.btnGhost{
-  border:none;
-  cursor:pointer;
+  border:none; cursor:pointer;
   border-radius: 999px;
   padding: 16px 16px;
   font-weight: 900;
@@ -267,13 +253,12 @@ input:focus,select:focus{
   text-align:center;
   text-decoration:none;
   box-shadow: 0 18px 40px rgba(0,0,0,.16);
-  touch-action: manipulation; /* Safari押せない対策 */
-  -webkit-tap-highlight-color: transparent;
 }
 .btnPrimary{
   background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3));
   color:white;
 }
+.btnPrimary[disabled]{opacity:.45;filter:saturate(.7);cursor:not-allowed}
 .btnLine{
   background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95));
   color:white;
@@ -285,29 +270,9 @@ input:focus,select:focus{
   box-shadow: 0 14px 30px rgba(0,0,0,.08);
 }
 
-.nav{
-  display:flex;
-  gap:12px;
-  margin-top: 14px;
-  position: relative;
-  z-index: 60; /* ← iOSで透明レイヤーが被るのを防ぐ */
-}
+.nav{display:flex; gap:12px;margin-top: 14px}
 .nav .btnGhost{flex:1}
 .nav .btnPrimary{flex:1}
-
-.ctaRow3{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap:12px;
-  margin-top:12px;
-  position: relative;
-  z-index: 60;
-}
-.ctaRow3 button{min-width:0}
-.ctaRow3 .btnLine{grid-column: 1 / 4} /* まずLINEを大きく */
-.ctaRow3 .btnPrimary{grid-column: 1 / 3}
-.ctaRow3 .btnGhost{grid-column: 3 / 4}
-
 .subHelp{color:var(--muted);font-size:13px;line-height:1.55}
 
 .toast{
@@ -344,14 +309,6 @@ input:focus,select:focus{
   .grid{grid-template-columns:1fr}
   .uploadGrid{grid-template-columns:1fr}
   h1{font-size:24px}
-  .ctaRow3{
-    grid-template-columns: 1fr;
-  }
-  .ctaRow3 .btnLine,
-  .ctaRow3 .btnPrimary,
-  .ctaRow3 .btnGhost{
-    grid-column: auto;
-  }
 }
 
 /* ===== PDF paper (hidden) ===== */
@@ -359,11 +316,16 @@ input:focus,select:focus{
   position: fixed;
   left:-99999px;
   top:0;
-  width: 794px;     /* A4 @ 96dpi */
-  min-height: 1123px;
+  width: 794px;
   background: #fff;
   color:#111;
-  padding: 24px;
+}
+.pdfPage{
+  width: 794px;
+  height: 1123px;
+  padding: 26px;
+  background:#fff;
+  overflow:hidden;
 }
 .pdfHeader{
   display:flex;
@@ -376,7 +338,17 @@ input:focus,select:focus{
 }
 .pdfTitle{font-size:22px;font-weight:900}
 .pdfDate{font-size:12px;color:#444;font-weight:800}
+.pdfRight{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .pdfMotto{font-size:12px;color:#ff7a00;font-weight:900;white-space:nowrap}
+.pdfPageNo{
+  font-size:12px;
+  font-weight:900;
+  color:#111;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid #eee;
+  background:#fafafa;
+}
 
 .pdfGrid{
   display:grid;
@@ -392,14 +364,10 @@ input:focus,select:focus{
 .pdfLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:6px}
 .pdfValue{font-size:14px;font-weight:900;color:#111;word-break:break-word}
 
-.pdfSectionTitle{
-  margin-top: 16px;
-  font-size: 16px;
-  font-weight: 900;
-}
+.pdfSectionTitle{margin-top: 8px;font-size: 16px;font-weight: 900}
 
 .pdfImgGrid{
-  margin-top: 10px;
+  margin-top: 12px;
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -410,17 +378,20 @@ input:focus,select:focus{
   padding: 10px;
 }
 .pdfImgLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:8px}
+
+/* 免許証は「読みやすさ優先」：上下だけトリミングして横幅最大 */
 .pdfImgBox img{
   width:100%;
-  height: 340px;          /* ← ここを大きく */
-  object-fit: cover;      /* ← 横幅最大、上下だけカット */
-  object-position: center;
+  height: 520px;
+  object-fit: cover;     /* coverで上下トリミング */
+  object-position: 50% 50%;
   border-radius: 10px;
   background:#fafafa;
   border:1px solid #eee;
 }
+
 .pdfFooterNote{
-  margin-top: 14px;
+  margin-top: 12px;
   font-size: 12px;
   color:#444;
   font-weight: 900;
