@@ -3,430 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>OFA GROUP Driver Registration App</title>
+  <title>OFA GROUP Driver App</title>
 
-  <!-- PDF生成（CDN） -->
-  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#ff7a00" />
+  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png" />
 
-  <style>
-    :root{
-      --bg1:#ff7a00;
-      --bg2:#ff2d55;
-      --bg3:#6a00ff;
-      --bg4:#00d084;
-      --card:#ffffffd8;
-      --text:#0b1220;
-      --muted:#5b6475;
-      --line:#00c300;
-      --shadow: 0 18px 50px rgba(0,0,0,.18);
-      --radius: 22px;
-      --radius2: 18px;
-      --safeTop: env(safe-area-inset-top);
-      --safeBottom: env(safe-area-inset-bottom);
-    }
+  <link rel="stylesheet" href="./style.css" />
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
-      color:var(--text);
-      overflow-x:hidden;
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    .bg{
-      position:fixed; inset:-40px;
-      background:
-        radial-gradient(900px 500px at 10% 10%, rgba(255,122,0,.55), transparent 60%),
-        radial-gradient(800px 550px at 90% 15%, rgba(106,0,255,.45), transparent 60%),
-        radial-gradient(800px 550px at 10% 90%, rgba(0,208,132,.45), transparent 60%),
-        radial-gradient(700px 450px at 90% 85%, rgba(255,45,85,.45), transparent 60%),
-        linear-gradient(135deg, rgba(255,245,235,.9), rgba(240,245,255,.9));
-      filter:saturate(1.15);
-    }
-
-    .app{
-      width:min(980px, 92vw);
-      margin: 14px auto calc(24px + var(--safeBottom));
-      padding-top: calc(10px + var(--safeTop));
-      position: relative;
-      z-index: 1;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 14px 16px;
-      border-radius: var(--radius);
-      background: linear-gradient(90deg, rgba(255,255,255,.70), rgba(255,255,255,.42));
-      box-shadow: var(--shadow);
-    }
-
-    .topLeft{display:flex;align-items:center;gap:12px;min-width:0}
-    .logoWrap{
-      width:44px;height:44px;border-radius:14px;
-      background: rgba(255,255,255,.75);
-      display:grid;place-items:center;
-      box-shadow: 0 8px 20px rgba(0,0,0,.10);
-      position:relative;
-      overflow:hidden;
-      flex: 0 0 auto;
-    }
-    .logoImg{width:34px;height:34px;object-fit:contain}
-    .logoFallbackBadge{
-      display:none;
-      font-weight:900;
-      font-size:14px;
-      letter-spacing:.08em;
-      color:#ff7a00;
-    }
-    .logoWrap.logoFallback .logoFallbackBadge{display:block}
-
-    .brand{min-width:0}
-    .brandName{font-weight:900;letter-spacing:.06em}
-    .brandSub{font-size:12px;color:var(--muted);margin-top:2px}
-
-    .chip{
-      display:flex;align-items:center;gap:8px;
-      padding:10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.78);
-      box-shadow: 0 10px 24px rgba(0,0,0,.10);
-      white-space:nowrap;
-      flex: 0 0 auto;
-    }
-    .dot{
-      width:10px;height:10px;border-radius:999px;
-      background: radial-gradient(circle at 30% 30%, #ff7a00, #ff2d55);
-    }
-
-    .progressZone{
-      margin:14px 6px 0;
-      padding: 12px 12px 10px;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.35);
-      box-shadow: 0 14px 36px rgba(0,0,0,.12);
-    }
-    .progressBar{
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.55);
-      overflow:hidden;
-    }
-    .barFill{
-      height:100%;
-      width:12.5%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4));
-      box-shadow: 0 6px 18px rgba(0,0,0,.18);
-      transition: width .25s ease;
-    }
-    .dots{display:flex;gap:9px;justify-content:center;margin-top:12px}
-    .d{
-      width:10px;height:10px;border-radius:999px;
-      background: rgba(255,255,255,.55);
-      transition: .22s ease;
-    }
-    .d.on{
-      width:18px;
-      background: radial-gradient(circle at 30% 30%, #ff7a00, #6a00ff);
-    }
-
-    .card{
-      margin-top:14px;
-      border-radius: var(--radius);
-      background: var(--card);
-      box-shadow: var(--shadow);
-      padding: 18px 16px 14px;
-    }
-
-    .head .badge{
-      display:inline-flex;
-      align-items:center;
-      padding: 7px 12px;
-      border-radius: 999px;
-      font-weight:800;
-      font-size:12px;
-      letter-spacing:.12em;
-      background: rgba(255,255,255,.75);
-      box-shadow: 0 10px 22px rgba(0,0,0,.08);
-    }
-    .b1{border-left:6px solid #ff7a00}
-    .b2{border-left:6px solid #00a3ff}
-    .b3{border-left:6px solid #00d084}
-    .b4{border-left:6px solid #6a00ff}
-    .b5{border-left:6px solid #ff2d55}
-    .b6{border-left:6px solid #ffb700}
-    .b7{border-left:6px solid #00c300}
-    .b8{border-left:6px solid #6a00ff}
-
-    h1{margin: 12px 0 6px;font-size: 26px;letter-spacing:.02em}
-    .head p{margin:0 0 10px;color:var(--muted);line-height:1.5}
-
-    /* ====== STEP navigation: iOSで確実に動く（hash） ====== */
-    .step{ display:none; }
-    .step:target{ display:block; }
-    body:not(:has(.step:target)) #s1{ display:block; }
-
-    .grid{display:grid;grid-template-columns: repeat(2, minmax(0,1fr));gap: 12px}
-    .field{display:flex;flex-direction:column;gap:6px}
-    label{font-size:13px;color:#2a3242;font-weight:800}
-
-    input,select,textarea{
-      width:100%;
-      padding: 14px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(30,40,60,.10);
-      background: rgba(255,255,255,.78);
-      outline:none;
-      font-size:15px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.05);
-    }
-    textarea{min-height: 92px; resize: vertical;}
-    input:focus,select:focus,textarea:focus{
-      border-color: rgba(255,122,0,.45);
-      box-shadow: 0 14px 30px rgba(255,122,0,.18);
-    }
-    .mt{margin-top:10px}
-
-    .uploadGrid{display:grid;grid-template-columns: repeat(2, minmax(0,1fr));gap: 12px}
-    .upCard{
-      border-radius: 20px;
-      background: rgba(255,255,255,.70);
-      border: 1px solid rgba(30,40,60,.10);
-      box-shadow: 0 14px 30px rgba(0,0,0,.06);
-      padding: 12px;
-    }
-    .upTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px}
-    .miniTag{
-      font-size:12px;font-weight:900;
-      padding:6px 10px;border-radius:999px;
-      background: linear-gradient(90deg, #ff7a00, #ff2d55);
-      color:#fff;white-space:nowrap;
-    }
-    .miniTag.gray{background: rgba(30,40,60,.15); color:#233}
-    .upTitle{font-weight:900;color:#0b1220}
-    .fileRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .fileRow input[type="file"]{box-shadow:none;padding:12px;border-radius:14px;background:rgba(255,255,255,.9)}
-    .preview{
-      width:100%;
-      display:none;
-      margin-top:10px;
-      border-radius: 16px;
-      border: 1px solid rgba(30,40,60,.12);
-      object-fit: cover;             /* 上下を切って拡大 */
-      object-position: center;       /* 中央寄せ */
-      height: 240px;                 /* ここで上下カット量が決まる */
-      background:#fafafa;
-    }
-    .hint{
-      margin-top:8px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.6;
-      font-weight:800;
-    }
-
-    .termsBox{
-      margin-top: 10px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.72);
-      border: 1px solid rgba(30,40,60,.10);
-      padding: 12px 14px;
-      box-shadow: 0 14px 30px rgba(0,0,0,.06);
-    }
-    .termsBox ul{margin:0;padding-left:18px;color:#2b3445;line-height:1.7;font-weight:800}
-    .agreeRow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-top: 12px;
-      padding: 12px 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.70);
-      border: 1px solid rgba(30,40,60,.10);
-    }
-    .agreeRow input{width:22px;height:22px;box-shadow:none}
-    .agreeText{font-weight:900;letter-spacing:.02em}
-    .note{margin-top:8px;color:var(--muted);font-size:13px;font-weight:900}
-
-    .nav{display:flex; gap:12px;margin-top: 14px}
-    .ctaRow3{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-    .ctaRow3 > *{flex:1; min-width: 160px}
-
-    .btnPrimary,.btnLine,.btnGhost{
-      border:none; cursor:pointer;
-      border-radius: 999px;
-      padding: 16px 16px;
-      font-weight: 900;
-      letter-spacing:.04em;
-      font-size: 16px;
-      text-align:center;
-      text-decoration:none;
-      box-shadow: 0 18px 40px rgba(0,0,0,.16);
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      user-select:none;
-    }
-    .btnPrimary{
-      background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3));
-      color:white;
-    }
-    .btnLine{
-      background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95));
-      color:white;
-    }
-    .btnGhost{
-      background: rgba(255,255,255,.78);
-      color:#0b1220;
-      border: 1px solid rgba(30,40,60,.10);
-      box-shadow: 0 14px 30px rgba(0,0,0,.08);
-    }
-    a.btnPrimary,a.btnGhost,a.btnLine{
-      display:flex; align-items:center; justify-content:center;
-    }
-    .btnDisabled{
-      opacity:.5;
-      pointer-events:none;
-      filter: grayscale(.2);
-    }
-
-    .subHelp{color:var(--muted);font-size:13px;line-height:1.55;font-weight:800}
-
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom: calc(16px + var(--safeBottom));
-      transform: translateX(-50%);
-      background: rgba(10,16,26,.90);
-      color: white;
-      padding: 12px 14px;
-      border-radius: 16px;
-      font-weight: 900;
-      letter-spacing:.02em;
-      box-shadow: 0 18px 50px rgba(0,0,0,.28);
-      opacity:0;
-      pointer-events:none;
-      transition: .22s ease;
-      z-index: 99;
-      max-width: 92vw;
-      text-align:center;
-    }
-    .toast.show{opacity:1}
-
-    .foot{
-      display:flex;justify-content:space-between;
-      color: rgba(30,40,60,.55);
-      font-weight: 800;
-      letter-spacing:.04em;
-      margin: 12px 6px 0;
-    }
-
-    /* mobile */
-    @media (max-width: 720px){
-      .grid{grid-template-columns:1fr}
-      .uploadGrid{grid-template-columns:1fr}
-      h1{font-size:24px}
-    }
-
-    /* ===== PDF paper (hidden) ===== */
-    .pdfPaper{
-      position: fixed;
-      left:-99999px;
-      top:0;
-      width: 794px;     /* A4 @ 96dpi */
-      min-height: 1123px;
-      background: #fff;
-      color:#111;
-      padding: 24px;
-    }
-    .pdfHeader{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap: 12px;
-      border-bottom: 4px solid #ff7a00;
-      padding-bottom: 10px;
-      margin-bottom: 14px;
-    }
-    .pdfTitle{font-size:22px;font-weight:900}
-    .pdfDate{font-size:12px;color:#444;font-weight:800}
-    .pdfMotto{font-size:12px;color:#ff7a00;font-weight:900;white-space:nowrap}
-
-    .pdfGrid{display:grid;grid-template-columns: 1fr 1fr;gap: 10px 12px}
-    .pdfItem{
-      border:1px solid #e7e7e7;
-      border-left:6px solid #ff7a00;
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-    .pdfLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:6px}
-    .pdfValue{font-size:14px;font-weight:900;color:#111;word-break:break-word}
-
-    .pdfSectionTitle{margin-top: 16px;font-size: 16px;font-weight: 900}
-
-    .pdfImgGrid{margin-top: 10px;display:grid;grid-template-columns: 1fr 1fr;gap: 12px}
-    .pdfImgBox{
-      border:1px solid #e7e7e7;
-      border-radius: 12px;
-      padding: 10px;
-    }
-    .pdfImgLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:8px}
-    .pdfImgBox img{
-      width:100%;
-      height: 300px;
-      object-fit: cover;          /* 上下をカットして拡大 */
-      object-position: center;
-      border-radius: 10px;
-      background:#fafafa;
-      border:1px solid #eee;
-    }
-    .pdfFooterNote{
-      margin-top: 12px;
-      font-size: 12px;
-      color:#444;
-      font-weight: 900;
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-    }
-  </style>
+  <!-- html2canvas + jsPDF（日本語は「画像化PDF」方式で確実に出ます） -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
-  <div class="bg"></div>
+  <div class="bg" aria-hidden="true"></div>
 
   <div class="app">
-    <div class="topbar">
+    <!-- Top App Bar -->
+    <header class="topbar">
       <div class="topLeft">
-        <div class="logoWrap" id="logoWrap">
-          <!-- 任意：ロゴ画像を置くなら assets/logo.png など -->
-          <img class="logoImg" id="logoImg" src="./assets/ofa-logo.png" alt="OFA" onerror="this.remove();document.getElementById('logoWrap').classList.add('logoFallback');">
-          <div class="logoFallbackBadge">OFA</div>
+        <div class="logoWrap" aria-hidden="true">
+          <img src="./assets/ofa-logo-192.png" class="logoImg" alt="OFA GROUP" />
         </div>
         <div class="brand">
           <div class="brandName">OFA GROUP</div>
           <div class="brandSub">Driver Registration App</div>
         </div>
       </div>
-
-      <div class="chip">
-        <div class="dot"></div>
-        <div id="stepChip">STEP 1 / 8</div>
+      <div class="topRight">
+        <div class="chip">
+          <span class="dot"></span>
+          <span id="stepLabel">STEP 1 / 8</span>
+        </div>
       </div>
-    </div>
+    </header>
 
-    <div class="progressZone">
-      <div class="progressBar"><div class="barFill" id="barFill"></div></div>
-      <div class="dots" id="dots"></div>
-    </div>
+    <!-- Progress + dots -->
+    <section class="progressZone">
+      <div class="progressBar"><div id="barFill" class="barFill"></div></div>
+      <div class="dots" aria-hidden="true" id="dots">
+        <span class="d on"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+        <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
+      </div>
+    </section>
 
-    <!-- ===================== STEP 1 ===================== -->
-    <section class="step" id="s1">
-      <div class="card">
+    <!-- Card -->
+    <main class="card">
+      <!-- STEP 1 -->
+      <section class="step active" data-step="1" id="s1">
         <div class="head">
           <div class="badge b1">PROFILE</div>
           <h1>ドライバー基本情報</h1>
@@ -436,108 +62,95 @@
         <div class="grid">
           <div class="field">
             <label>氏名（漢字）</label>
-            <input id="nameKanji" type="text" placeholder="例）山田 太郎" autocomplete="name" />
+            <input id="name" type="text" placeholder="山田 太郎" autocomplete="name" />
           </div>
+
           <div class="field">
             <label>フリガナ</label>
-            <input id="nameKana" type="text" placeholder="例）ヤマダ タロウ" />
+            <input id="kana" type="text" placeholder="ヤマダ タロウ" />
           </div>
+
           <div class="field">
             <label>電話番号</label>
-            <input id="phone" type="tel" inputmode="tel" placeholder="090-xxxx-xxxx" />
+            <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" />
           </div>
+
           <div class="field">
-            <label>メールアドレス</label>
-            <input id="email" type="email" inputmode="email" placeholder="example@gmail.com" autocomplete="email" />
+            <label>メールアドレス（任意）</label>
+            <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" />
+          </div>
+
+          <div class="field">
+            <label>生年月日（任意）</label>
+            <input id="birth" type="date" />
           </div>
         </div>
+      </section>
 
-        <div class="field mt">
-          <label>生年月日</label>
-          <input id="dob" type="date" />
-        </div>
-
-        <div class="nav">
-          <a class="btnGhost" href="#s1" id="btnBack1">戻る</a>
-          <a class="btnPrimary" href="#s2" id="btnNext1">次へ</a>
-        </div>
-
-        <div class="subHelp mt">※「次へ」が押せない（iPhone/Safari）問題は、この画面遷移方式で解消しています。</div>
-      </div>
-    </section>
-
-    <!-- ===================== STEP 2 ===================== -->
-    <section class="step" id="s2">
-      <div class="card">
+      <!-- STEP 2 -->
+      <section class="step" data-step="2">
         <div class="head">
           <div class="badge b2">ADDRESS</div>
-          <h1>住所</h1>
-          <p>稼働エリア調整に使用します。</p>
+          <h1>住所情報</h1>
+          <p>日本語で入力してください。</p>
         </div>
 
         <div class="grid">
           <div class="field">
             <label>郵便番号</label>
-            <input id="zip" type="text" inputmode="numeric" placeholder="例）890-0000" />
+            <input id="zip" type="text" inputmode="numeric" placeholder="890-0000" />
           </div>
+
           <div class="field">
             <label>都道府県</label>
-            <input id="pref" type="text" placeholder="例）鹿児島県" />
+            <input id="pref" type="text" placeholder="鹿児島県" />
+          </div>
+
+          <div class="field">
+            <label>市区町村</label>
+            <input id="city" type="text" placeholder="鹿児島市" />
+          </div>
+
+          <div class="field">
+            <label>番地</label>
+            <input id="addr1" type="text" placeholder="〇〇町1-2-3" />
+          </div>
+
+          <div class="field">
+            <label>建物名（任意）</label>
+            <input id="addr2" type="text" placeholder="〇〇マンション101" />
           </div>
         </div>
+      </section>
 
-        <div class="field mt">
-          <label>住所（市区町村・番地・建物名）</label>
-          <input id="address" type="text" placeholder="例）鹿児島市○○ 1-2-3 ○○ビル101" />
-        </div>
-
-        <div class="nav">
-          <a class="btnGhost" href="#s1">戻る</a>
-          <a class="btnPrimary" href="#s3">次へ</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== STEP 3 ===================== -->
-    <section class="step" id="s3">
-      <div class="card">
+      <!-- STEP 3（所属は入力だけ：表示ラベル等は出さない） -->
+      <section class="step" data-step="3">
         <div class="head">
           <div class="badge b3">AFFILIATION</div>
-          <h1>所属</h1>
-          <p>あなたの所属に近いものを選択してください。</p>
+          <h1>所属（任意）</h1>
+          <p>協力会社 / FC / 個人 いずれでも登録必須です。</p>
         </div>
 
-        <div class="grid">
-          <div class="field">
-            <label>所属区分</label>
-            <select id="affType">
-              <option value="">選択してください</option>
-              <option>協力会社</option>
-              <option>FC</option>
-              <option>個人</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>所属会社名（任意）</label>
-            <input id="affCompany" type="text" placeholder="株式会社○○ / ○○運送など" />
-          </div>
+        <div class="seg seg3">
+          <button class="segBtn s1" type="button" data-value="協力会社">協力会社</button>
+          <button class="segBtn s2" type="button" data-value="FC">FC</button>
+          <button class="segBtn s3" type="button" data-value="個人">個人</button>
         </div>
 
-        <div class="nav">
-          <a class="btnGhost" href="#s2">戻る</a>
-          <a class="btnPrimary" href="#s4">次へ</a>
-        </div>
-      </div>
-    </section>
+        <input id="affType" type="hidden" value="" />
 
-    <!-- ===================== STEP 4（修正：車種/黒ナンバーのみ） ===================== -->
-    <section class="step" id="s4">
-      <div class="card">
+        <div class="field mt">
+          <label>所属会社名（任意）</label>
+          <input id="company" type="text" placeholder="株式会社〇〇 / 〇〇運送 など" />
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step" data-step="4">
         <div class="head">
           <div class="badge b4">VEHICLE</div>
           <h1>車両情報</h1>
-          <p>稼働に必要な車両情報を入力してください。</p>
+          <p>案件案内・稼働可否の確認に必要です。</p>
         </div>
 
         <div class="grid">
@@ -563,106 +176,89 @@
               <option>リース希望</option>
             </select>
           </div>
-        </div>
 
-        <div class="nav">
-          <a class="btnGhost" href="#s3">戻る</a>
-          <a class="btnPrimary" href="#s5">次へ</a>
+          <div class="field">
+            <label>車両ナンバー（任意）</label>
+            <input id="plate" type="text" placeholder="鹿児島 480 あ 12-34" />
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===================== STEP 5 ===================== -->
-    <section class="step" id="s5">
-      <div class="card">
+      <!-- STEP 5 -->
+      <section class="step" data-step="5">
         <div class="head">
-          <div class="badge b5">BANK</div>
-          <h1>振込口座</h1>
-          <p>報酬の振込に使用します。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>銀行</label>
-            <input id="bankName" type="text" placeholder="例）三井住友銀行" />
-          </div>
-          <div class="field">
-            <label>支店</label>
-            <input id="bankBranch" type="text" placeholder="例）鹿児島支店" />
-          </div>
-          <div class="field">
-            <label>口座種別</label>
-            <select id="bankType">
-              <option value="">選択してください</option>
-              <option>普通</option>
-              <option>当座</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>口座番号</label>
-            <input id="bankNumber" type="text" inputmode="numeric" placeholder="例）1234567" />
-          </div>
-        </div>
-
-        <div class="field mt">
-          <label>口座名義（カナ）</label>
-          <input id="bankHolderKana" type="text" placeholder="例）ヤマダ タロウ" />
-        </div>
-
-        <div class="nav">
-          <a class="btnGhost" href="#s4">戻る</a>
-          <a class="btnPrimary" href="#s6">次へ</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== STEP 6（免許証：上下をカットして見やすく） ===================== -->
-    <section class="step" id="s6">
-      <div class="card">
-        <div class="head">
-          <div class="badge b6">DOCUMENTS</div>
-          <h1>提出画像</h1>
-          <p>免許証画像をアップロードしてください（必要に応じて確認に使用します）。</p>
+          <div class="badge b5">LICENSE</div>
+          <h1>運転免許証</h1>
+          <p>表面は必須です（本人確認）。縦長の写真は「上下を自動カット」して見やすく出力します。</p>
         </div>
 
         <div class="uploadGrid">
           <div class="upCard">
             <div class="upTop">
-              <div class="upTitle">免許証 表面（必須）</div>
               <div class="miniTag">必須</div>
+              <div class="upTitle">表面</div>
             </div>
-            <div class="fileRow">
-              <input id="licFront" type="file" accept="image/*" />
-            </div>
-            <img id="licFrontPrev" class="preview" alt="免許証 表面 preview" />
-            <div class="hint">
-              ※ 写真は縦長でもOK。PDFでは「上下をカットして拡大」し、免許証が見えるように出力します。
-            </div>
+            <input id="licFront" type="file" accept="image/*" />
+            <img id="licFrontPrev" class="preview" alt="" />
           </div>
 
           <div class="upCard">
             <div class="upTop">
-              <div class="upTitle">免許証 裏面（任意）</div>
               <div class="miniTag gray">任意</div>
+              <div class="upTitle">裏面</div>
             </div>
-            <div class="fileRow">
-              <input id="licBack" type="file" accept="image/*" />
-            </div>
-            <img id="licBackPrev" class="preview" alt="免許証 裏面 preview" />
-            <div class="hint">※ 裏面に記載がある場合のみアップしてください。</div>
+            <input id="licBack" type="file" accept="image/*" />
+            <img id="licBackPrev" class="preview" alt="" />
           </div>
         </div>
 
-        <div class="nav">
-          <a class="btnGhost" href="#s5">戻る</a>
-          <a class="btnPrimary" href="#s7">次へ</a>
+        <div class="hintBox">
+          <div class="hintTitle">📌 写真のポイント</div>
+          <ul>
+            <li>免許証が画面いっぱいに入るよう近づいて撮影</li>
+            <li>Galaxy / Androidは写真が重いとPDF作成に時間がかかることがあります</li>
+            <li>ピントを合わせ、ブレないように撮影してください</li>
+          </ul>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===================== STEP 7（規約：指定文に差し替え） ===================== -->
-    <section class="step" id="s7">
-      <div class="card">
+      <!-- STEP 6 -->
+      <section class="step" data-step="6">
+        <div class="head">
+          <div class="badge b6">BANK</div>
+          <h1>銀行振込先</h1>
+          <p>報酬支払いのために必要です。</p>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>銀行名</label>
+            <input id="bank" type="text" placeholder="〇〇銀行 / ゆうちょ銀行 など" />
+          </div>
+
+          <div class="field">
+            <label>口座種別</label>
+            <select id="acctType">
+              <option value="">選択してください</option>
+              <option>普通</option>
+              <option>当座</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>口座番号</label>
+            <input id="acctNo" type="text" inputmode="numeric" placeholder="1234567" />
+          </div>
+
+          <div class="field">
+            <label>口座名義（カナ）</label>
+            <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 7 -->
+      <section class="step" data-step="7">
         <div class="head">
           <div class="badge b7">TERMS</div>
           <h1>登録規約</h1>
@@ -673,7 +269,7 @@
           <ul>
             <li>本登録はドライバー本人が行うものとします。</li>
             <li>入力内容および提出書類は正確な情報であることを保証してください。</li>
-            <li>虚申告・不正が判明した場合、登録・契約をお断りする場合があります。</li>
+            <li>虚偽申告・不正が判明した場合、登録・契約をお断りする場合があります。</li>
             <li>取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。</li>
             <li>登録後、OFA GROUP担当者より連絡を行い案件を決定します。</li>
           </ul>
@@ -681,459 +277,154 @@
 
         <label class="agreeRow">
           <input id="agree" type="checkbox" />
-          <div class="agreeText">上記に同意します</div>
+          <span class="agreeText">上記内容に同意します</span>
         </label>
 
-        <div class="note">※ 同意後に「次へ」で完了画面へ進みます。</div>
-
-        <div class="nav">
-          <a class="btnGhost" href="#s6">戻る</a>
-          <a class="btnPrimary" href="#s8" id="toDone">次へ</a>
+        <div class="note">
+          ※ 同意チェックがない場合、次へ進めません。
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===================== STEP 8（導線：LINE→PDF→共有、横3つ） ===================== -->
-    <section class="step" id="s8">
-      <div class="card">
+      <!-- STEP 8 -->
+      <section class="step" data-step="8">
         <div class="head">
           <div class="badge b8">DONE</div>
           <h1>登録完了</h1>
-          <p>
-            ① まず <b>OFAメンバーシップLINE</b> を追加（開く）<br>
-            ② 次に <b>登録PDF</b> を作成<br>
-            ③ PDFを <b>LINEへ送信</b> してください
+          <p class="doneText">
+            <b>導線：</b><br />
+            ① 先に <b>OFAメンバーシップLINE</b> を開いて追加<br />
+            ② 次に <b>登録PDFを作成</b>（PDFを開きます）<br />
+            ③ PDF画面の <b>共有ボタン</b> からLINEで送信してください
           </p>
         </div>
 
-        <div class="ctaRow3">
-          <a class="btnLine" id="openLineBtn" href="https://lin.ee/8x437Vt" target="_blank" rel="noopener">メンバーシップLINEを開く</a>
-          <button class="btnPrimary" id="makePdfBtn" type="button">登録PDFを作成</button>
-          <button class="btnGhost btnDisabled" id="shareBtn" type="button">PDFを共有</button>
+        <div class="btnRow3">
+          <button id="openLineBtn" class="btnLine" type="button">メンバーシップLINEを開く</button>
+          <button id="makePdfBtn" class="btnPrimary" type="button">登録PDFを作成（開く）</button>
+          <button id="howBtn" class="btnGhost" type="button">送信方法</button>
         </div>
 
-        <div class="note">
-          ※ LINE未追加だと共有先に表示されない場合があります。<br>
-          先にLINE追加 → その後PDF作成 の順番でお願いします。
-        </div>
+        <a id="savePdfLink" class="saveLink" href="#" download="OFA_driver_entry.pdf" aria-disabled="true">
+          予備：PDFを保存（必要な人だけ）
+        </a>
 
-        <div class="nav">
-          <a class="btnGhost" href="#s7">戻る</a>
-          <a class="btnPrimary" href="#s1" id="restart">最初から</a>
+        <div class="subHelp">
+          ※ iPhone / LINEブラウザは自動送信されません。PDF表示後に「共有」→「LINE」で送信してください。<br />
+          ※ Galaxy等で反応が遅い場合は、PDF作成中の表示が消えるまでお待ちください。
         </div>
+      </section>
+
+      <!-- Bottom Navigation -->
+      <div class="nav">
+        <button id="backBtn" class="btnGhost" type="button">戻る</button>
+        <button id="nextBtn" class="btnPrimary" type="button">次へ</button>
       </div>
-    </section>
 
-    <div class="foot">
-      <div>© OFA GROUP</div>
-      <div>One for All, All for One</div>
-    </div>
+      <div id="toast" class="toast"></div>
+    </main>
+
+    <footer class="foot">
+      <div class="footLeft">© OFA GROUP</div>
+      <div class="footRight">One for All, All for One</div>
+    </footer>
   </div>
 
-  <!-- hidden PDF paper -->
-  <div class="pdfPaper" id="pdfPaper">
+  <!-- ===== PDF用の隠しA4（ここを画像化してPDFにします） ===== -->
+  <div id="pdfPaper" class="pdfPaper" aria-hidden="true">
     <div class="pdfHeader">
-      <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
-      <div class="pdfDate" id="pdfDate">作成日時：</div>
-      <div class="pdfMotto">One for All, All for One</div>
+      <div class="pdfHeaderLeft">
+        <img src="./assets/ofa-logo-192.png" class="pdfLogo" alt="OFA" />
+        <div>
+          <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
+          <div class="pdfSub">※ 本シートは契約前の正式情報として扱います</div>
+        </div>
+      </div>
+      <div class="pdfHeaderRight">
+        <div class="pdfDate" id="pdfDate"></div>
+        <div class="pdfMotto">One for All, All for One</div>
+      </div>
     </div>
 
     <div class="pdfGrid">
-      <div class="pdfItem">
-        <div class="pdfLabel">氏名（漢字）</div>
-        <div class="pdfValue" id="p_nameKanji"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">フリガナ</div>
-        <div class="pdfValue" id="p_nameKana"></div>
-      </div>
+      <div class="pdfItem"><div class="pdfLabel">氏名（漢字）</div><div class="pdfValue" id="p_name"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">フリガナ</div><div class="pdfValue" id="p_kana"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">電話番号</div><div class="pdfValue" id="p_phone"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">メール（任意）</div><div class="pdfValue" id="p_email"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">生年月日（任意）</div><div class="pdfValue" id="p_birth"></div></div>
 
-      <div class="pdfItem">
-        <div class="pdfLabel">電話番号</div>
-        <div class="pdfValue" id="p_phone"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">メール</div>
-        <div class="pdfValue" id="p_email"></div>
-      </div>
-
-      <div class="pdfItem">
-        <div class="pdfLabel">生年月日</div>
-        <div class="pdfValue" id="p_dob"></div>
-      </div>
-      <div class="pdfItem">
+      <div class="pdfItem" style="grid-column: 1 / -1;">
         <div class="pdfLabel">住所</div>
         <div class="pdfValue" id="p_address"></div>
       </div>
 
-      <div class="pdfItem">
-        <div class="pdfLabel">所属区分</div>
-        <div class="pdfValue" id="p_affType"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">所属会社名（任意）</div>
-        <div class="pdfValue" id="p_affCompany"></div>
+      <div class="pdfItem"><div class="pdfLabel">所属（任意）</div><div class="pdfValue" id="p_aff"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">所属会社名（任意）</div><div class="pdfValue" id="p_company"></div></div>
+
+      <div class="pdfItem"><div class="pdfLabel">車種</div><div class="pdfValue" id="p_vehicleType"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">黒ナンバー</div><div class="pdfValue" id="p_blackPlate"></div></div>
+
+      <div class="pdfItem" style="grid-column: 1 / -1;">
+        <div class="pdfLabel">車両ナンバー（任意）</div>
+        <div class="pdfValue" id="p_plate"></div>
       </div>
 
-      <div class="pdfItem">
-        <div class="pdfLabel">車種</div>
-        <div class="pdfValue" id="p_vehicleType"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">黒ナンバー</div>
-        <div class="pdfValue" id="p_blackPlate"></div>
-      </div>
-
-      <div class="pdfItem">
-        <div class="pdfLabel">銀行</div>
-        <div class="pdfValue" id="p_bankName"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">支店</div>
-        <div class="pdfValue" id="p_bankBranch"></div>
-      </div>
-
-      <div class="pdfItem">
-        <div class="pdfLabel">口座種別</div>
-        <div class="pdfValue" id="p_bankType"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">口座番号</div>
-        <div class="pdfValue" id="p_bankNumber"></div>
-      </div>
-
-      <div class="pdfItem">
-        <div class="pdfLabel">口座名義（カナ）</div>
-        <div class="pdfValue" id="p_bankHolderKana"></div>
-      </div>
-      <div class="pdfItem">
-        <div class="pdfLabel">備考</div>
-        <div class="pdfValue">—</div>
-      </div>
+      <div class="pdfItem"><div class="pdfLabel">銀行名</div><div class="pdfValue" id="p_bank"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">口座種別</div><div class="pdfValue" id="p_acctType"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">口座番号</div><div class="pdfValue" id="p_acctNo"></div></div>
+      <div class="pdfItem"><div class="pdfLabel">口座名義（カナ）</div><div class="pdfValue" id="p_acctName"></div></div>
     </div>
 
-    <div class="pdfSectionTitle">提出画像</div>
+    <div class="pdfSectionTitle">運転免許証（画像）</div>
     <div class="pdfImgGrid">
       <div class="pdfImgBox">
-        <div class="pdfImgLabel">免許証 表面（必須）</div>
-        <img id="p_licFrontImg" alt="lic front" />
+        <div class="pdfImgLabel">表面（必須）</div>
+        <img id="p_licFront" alt="" />
       </div>
       <div class="pdfImgBox">
-        <div class="pdfImgLabel">免許証 裏面（任意）</div>
-        <img id="p_licBackImg" alt="lic back" />
+        <div class="pdfImgLabel">裏面（任意）</div>
+        <img id="p_licBack" alt="" />
       </div>
     </div>
 
     <div class="pdfFooterNote">
-      このPDFを「OFAメンバーシップLINE」へ添付して送信してください。
+      登録後、OFA GROUP担当者より連絡を行い案件を決定します。／ 本PDFはOFAメンバーシップLINEへ送信してください。
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <!-- 処理中オーバーレイ -->
+  <div id="busy" class="busy" aria-hidden="true">
+    <div class="busyBox">
+      <div class="spinner"></div>
+      <div class="busyTitle">PDFを作成中です…</div>
+      <div class="busySub">端末によって30秒ほどかかる場合があります（そのままお待ちください）</div>
+    </div>
+  </div>
+
+  <!-- 送信方法モーダル -->
+  <div id="howModal" class="modal" aria-hidden="true">
+    <div class="modalBg" id="howCloseBg"></div>
+    <div class="modalBox">
+      <div class="modalTitle">送信方法（iPhone / LINEブラウザ）</div>
+      <ol class="modalList">
+        <li>先に「メンバーシップLINEを開く」→ 追加</li>
+        <li>戻って「登録PDFを作成（開く）」</li>
+        <li>PDF画面で「共有」ボタン（↑）</li>
+        <li>「LINE」を選択して送信</li>
+      </ol>
+      <div class="modalNote">
+        ※ LINEアプリ内ブラウザで共有先にLINEが出ない場合：<br />
+        右上「…」→「他のアプリで開く」→ Safariで開いて共有してください。
+      </div>
+      <button id="howCloseBtn" class="btnGhost" type="button">閉じる</button>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
 
   <script>
-    // ===================== 設定 =====================
-    const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/8x437Vt";
-
-    // ===================== util =====================
-    const $ = (id)=>document.getElementById(id);
-    function toast(msg){
-      const t = $("toast");
-      t.textContent = msg;
-      t.classList.add("show");
-      clearTimeout(toast._tm);
-      toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
     }
-    function pad2(n){ return String(n).padStart(2,"0"); }
-    function formatDT(d){
-      return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-    }
-
-    // ===================== progress =====================
-    const stepIds = ["s1","s2","s3","s4","s5","s6","s7","s8"];
-    function currentStepIndex(){
-      const hash = location.hash.replace("#","");
-      const idx = stepIds.indexOf(hash);
-      return idx >= 0 ? idx : 0;
-    }
-    function renderDots(){
-      const dots = $("dots");
-      dots.innerHTML = "";
-      for(let i=0;i<8;i++){
-        const e = document.createElement("div");
-        e.className = "d" + (i===0 ? " on" : "");
-        dots.appendChild(e);
-      }
-    }
-    function updateProgress(){
-      const idx = currentStepIndex();
-      $("stepChip").textContent = `STEP ${idx+1} / 8`;
-      $("barFill").style.width = `${((idx+1)/8)*100}%`;
-      const dots = $("dots").children;
-      for(let i=0;i<dots.length;i++){
-        dots[i].classList.toggle("on", i===idx);
-      }
-    }
-
-    // ===================== input preview =====================
-    function bindImagePreview(fileInputId, imgId){
-      const inp = $(fileInputId);
-      const img = $(imgId);
-      inp.addEventListener("change", ()=>{
-        const f = inp.files && inp.files[0];
-        if(!f){ img.style.display="none"; img.src=""; return; }
-        const url = URL.createObjectURL(f);
-        img.src = url;
-        img.style.display = "block";
-      });
-    }
-
-    // ===================== terms gate =====================
-    function bindTermsGate(){
-      $("toDone").addEventListener("click", (e)=>{
-        if(!$("agree").checked){
-          e.preventDefault();
-          toast("規約に同意してください");
-          // そのままs7に留まる
-        }
-      });
-    }
-
-    // ===================== PDF: 免許証「上下だけカット」して拡大 =====================
-    async function fileToCroppedDataUrl(file, cropMode){
-      // cropMode: "license" = 上下を中心カット（免許が中央にある想定）
-      // ここで「縦長写真の上下余白だけを削って、免許が見えるように拡大」する
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      const url = URL.createObjectURL(file);
-
-      await new Promise((resolve, reject)=>{
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = url;
-      });
-
-      const w = img.naturalWidth;
-      const h = img.naturalHeight;
-
-      // 免許は横長で中央にあることが多いので、
-      // 縦方向を中心に 60% だけ残して上下を削る（見やすくなる）
-      // ※もっと削りたいなら 0.55、削りたくないなら 0.75 など調整OK
-      const keepH = cropMode==="license" ? Math.round(h * 0.62) : h;
-      const sy = cropMode==="license" ? Math.round((h - keepH)/2) : 0;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = keepH;
-      const ctx = canvas.getContext("2d", {alpha:false});
-      ctx.drawImage(img, 0, sy, w, keepH, 0, 0, w, keepH);
-
-      URL.revokeObjectURL(url);
-      return canvas.toDataURL("image/jpeg", 0.92);
-    }
-
-    function fillPdfFields(){
-      $("p_nameKanji").textContent = $("nameKanji").value || "—";
-      $("p_nameKana").textContent  = $("nameKana").value  || "—";
-      $("p_phone").textContent     = $("phone").value     || "—";
-      $("p_email").textContent     = $("email").value     || "—";
-      $("p_dob").textContent       = $("dob").value       || "—";
-
-      const addr = [ $("zip").value, $("pref").value, $("address").value ].filter(Boolean).join(" ");
-      $("p_address").textContent   = addr || "—";
-
-      $("p_affType").textContent    = $("affType").value || "—";
-      $("p_affCompany").textContent = $("affCompany").value || "—";
-
-      $("p_vehicleType").textContent = $("vehicleType").value || "—";
-      $("p_blackPlate").textContent  = $("blackPlate").value  || "—";
-
-      $("p_bankName").textContent      = $("bankName").value || "—";
-      $("p_bankBranch").textContent    = $("bankBranch").value || "—";
-      $("p_bankType").textContent      = $("bankType").value || "—";
-      $("p_bankNumber").textContent    = $("bankNumber").value || "—";
-      $("p_bankHolderKana").textContent= $("bankHolderKana").value || "—";
-    }
-
-    // PDF生成（Blob作成して、DL/共有に使う）
-    let lastPdfBlob = null;
-    let lastPdfFileName = null;
-
-    async function makePdf(){
-      // 必須チェック（最低限）
-      if(!$("nameKanji").value || !$("phone").value || !$("email").value || !$("dob").value){
-        toast("STEP1の必須項目（氏名/電話/メール/生年月日）を入力してください");
-        location.hash = "#s1";
-        return;
-      }
-      const frontFile = $("licFront").files && $("licFront").files[0];
-      if(!frontFile){
-        toast("免許証 表面（必須）をアップしてください");
-        location.hash = "#s6";
-        return;
-      }
-
-      fillPdfFields();
-
-      const now = new Date();
-      $("pdfDate").textContent = "作成日時：" + formatDT(now);
-
-      // 免許画像：上下だけカットして拡大
-      const frontDataUrl = await fileToCroppedDataUrl(frontFile, "license");
-      $("p_licFrontImg").src = frontDataUrl;
-
-      const backFile = $("licBack").files && $("licBack").files[0];
-      if(backFile){
-        const backDataUrl = await fileToCroppedDataUrl(backFile, "license");
-        $("p_licBackImg").src = backDataUrl;
-      }else{
-        $("p_licBackImg").src = "";
-        $("p_licBackImg").style.background = "#fafafa";
-      }
-
-      // html2canvas → jsPDF
-      toast("PDFを作成中…");
-
-      // 画像読み込み待ち
-      await new Promise(r=>setTimeout(r, 150));
-
-      const paper = $("pdfPaper");
-      const canvas = await html2canvas(paper, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
-      const { jsPDF } = window.jspdf;
-
-      const pdf = new jsPDF({ orientation:"p", unit:"pt", format:"a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-
-      // 画像をA4にフィット
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
-
-      // 1ページに収まる前提（超えたら分割）
-      if(imgH <= pageH){
-        pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
-      }else{
-        // 分割レンダリング
-        let y = 0;
-        let remaining = imgH;
-        while(remaining > 0){
-          pdf.addImage(imgData, "JPEG", 0, y, imgW, imgH);
-          remaining -= pageH;
-          if(remaining > 0){
-            pdf.addPage();
-            y -= pageH;
-          }
-        }
-      }
-
-      const fileName = `OFA_driver_entry_${now.getFullYear()}${pad2(now.getMonth()+1)}${pad2(now.getDate())}_${pad2(now.getHours())}${pad2(now.getMinutes())}.pdf`;
-      const pdfBlob = pdf.output("blob");
-
-      lastPdfBlob = pdfBlob;
-      lastPdfFileName = fileName;
-
-      // iOS対策：まずダウンロードを促す（Safariは別タブ表示が安定）
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      toast("PDFを作成しました（ダウンロードしました）");
-
-      // 共有ボタンを有効化
-      $("shareBtn").classList.remove("btnDisabled");
-
-      // cleanup
-      setTimeout(()=>URL.revokeObjectURL(blobUrl), 5000);
-    }
-
-    async function sharePdf(){
-      if(!lastPdfBlob){
-        toast("先に「登録PDFを作成」を押してください");
-        return;
-      }
-      const file = new File([lastPdfBlob], lastPdfFileName || "OFA_driver_entry.pdf", { type:"application/pdf" });
-
-      // Web Share API (iOS/Androidで対応)
-      if(navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
-        try{
-          await navigator.share({
-            title: "OFA 登録PDF",
-            text: "OFAメンバーシップLINEへ送信してください。",
-            files: [file]
-          });
-          toast("共有画面を開きました");
-        }catch(e){
-          toast("共有をキャンセルしました");
-        }
-      }else{
-        toast("この端末では「共有」が非対応です。ダウンロードしたPDFをLINEから送信してください。");
-      }
-    }
-
-    // ===================== init =====================
-    document.addEventListener("DOMContentLoaded", ()=>{
-      // initial hash
-      if(!location.hash) location.hash = "#s1";
-
-      renderDots();
-      updateProgress();
-
-      window.addEventListener("hashchange", ()=>{
-        updateProgress();
-        // iOSでページトップに戻したい場合
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-
-      // 画像プレビュー
-      bindImagePreview("licFront", "licFrontPrev");
-      bindImagePreview("licBack",  "licBackPrev");
-
-      // 規約ゲート
-      bindTermsGate();
-
-      // LINEボタンのURL固定
-      $("openLineBtn").href = OFA_MEMBERSHIP_LINE_URL;
-
-      // PDF
-      $("makePdfBtn").addEventListener("click", makePdf);
-
-      // share
-      $("shareBtn").addEventListener("click", sharePdf);
-
-      // 軽い入力フォーマット（任意）
-      $("phone").addEventListener("blur", ()=>{
-        const v = $("phone").value.trim();
-        if(!v) return;
-        // +81が入っててもOK。表示だけ整えるならここで変換。
-      });
-
-      // 「次へが押せない」対策：aタグ遷移なので基本不要だが、
-      // iOSで稀にタップが無効になる場合の保険（クリックを強制）
-      const allNavLinks = document.querySelectorAll('a.btnPrimary[href^="#"], a.btnGhost[href^="#"]');
-      allNavLinks.forEach(a=>{
-        a.addEventListener("touchend", (e)=>{
-          // 余計なスクロール/選択を抑制
-          // ※preventDefaultすると遷移しないのでしない
-        }, {passive:true});
-      });
-
-      // 重要：STEP7→STEP8は同意が必要
-      $("agree").addEventListener("change", ()=>{
-        if($("agree").checked){
-          toast("同意しました。次へ進めます。");
-        }
-      });
-    });
   </script>
 </body>
 </html>
