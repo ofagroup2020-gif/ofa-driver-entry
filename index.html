@@ -2,429 +2,79 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>OFA GROUP Driver App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>OFA GROUP Driver Registration App</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <meta name="theme-color" content="#ff7a00" />
-  <link rel="apple-touch-icon" href="./assets/ofa-logo-180.png" />
+  <link rel="stylesheet" href="./style.css?v=20260201_1" />
 
-  <link rel="stylesheet" href="./style.css" />
-
-  <!-- html2canvas + jsPDF（日本語は「画像化PDF」方式で確実に出ます） -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- jsPDF + AutoTable (CDN) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 
 <body>
-  <div class="bg" aria-hidden="true"></div>
+  <div class="bg"></div>
 
-  <div class="app">
-    <!-- Top App Bar -->
-    <header class="topbar">
-      <div class="topLeft">
-        <div class="logoWrap" aria-hidden="true">
-          <img src="./assets/ofa-logo-192.png" class="logoImg" alt="OFA GROUP" />
-        </div>
-        <div class="brand">
-          <div class="brandName">OFA GROUP</div>
-          <div class="brandSub">Driver Registration App</div>
-        </div>
+  <header class="topBar">
+    <div class="brand">
+      <div class="logoWrap" aria-label="OFA LOGO">
+        <!-- ロゴが「?」になる対策：相対→失敗したら絶対URLへ自動切替 -->
+        <img
+          id="ofaLogo"
+          class="logoImg"
+          src="./assets/ofa-logo-192.png"
+          alt="OFA"
+          onerror="this.onerror=null; this.src='https://ofagroup2020-gif.github.io/ofa-driver-entry/assets/ofa-logo-192.png';"
+        />
       </div>
-      <div class="topRight">
-        <div class="chip">
-          <span class="dot"></span>
-          <span id="stepLabel">STEP 1 / 8</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Progress + dots -->
-    <section class="progressZone">
-      <div class="progressBar"><div id="barFill" class="barFill"></div></div>
-      <div class="dots" aria-hidden="true" id="dots">
-        <span class="d on"></span><span class="d"></span><span class="d"></span><span class="d"></span>
-        <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span>
-      </div>
-    </section>
-
-    <!-- Card -->
-    <main class="card">
-      <!-- STEP 1 -->
-      <section class="step active" data-step="1" id="s1">
-        <div class="head">
-          <div class="badge b1">PROFILE</div>
-          <h1>ドライバー基本情報</h1>
-          <p>本登録はドライバーご本人が行ってください。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>氏名（漢字）</label>
-            <input id="name" type="text" placeholder="山田 太郎" autocomplete="name" />
-          </div>
-
-          <div class="field">
-            <label>フリガナ</label>
-            <input id="kana" type="text" placeholder="ヤマダ タロウ" />
-          </div>
-
-          <div class="field">
-            <label>電話番号</label>
-            <input id="phone" type="tel" placeholder="090-xxxx-xxxx" autocomplete="tel" />
-          </div>
-
-          <div class="field">
-            <label>メールアドレス（任意）</label>
-            <input id="email" type="email" placeholder="example@gmail.com" autocomplete="email" />
-          </div>
-
-          <div class="field">
-            <label>生年月日（任意）</label>
-            <input id="birth" type="date" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 2 -->
-      <section class="step" data-step="2">
-        <div class="head">
-          <div class="badge b2">ADDRESS</div>
-          <h1>住所情報</h1>
-          <p>日本語で入力してください。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>郵便番号</label>
-            <input id="zip" type="text" inputmode="numeric" placeholder="890-0000" />
-          </div>
-
-          <div class="field">
-            <label>都道府県</label>
-            <input id="pref" type="text" placeholder="鹿児島県" />
-          </div>
-
-          <div class="field">
-            <label>市区町村</label>
-            <input id="city" type="text" placeholder="鹿児島市" />
-          </div>
-
-          <div class="field">
-            <label>番地</label>
-            <input id="addr1" type="text" placeholder="〇〇町1-2-3" />
-          </div>
-
-          <div class="field">
-            <label>建物名（任意）</label>
-            <input id="addr2" type="text" placeholder="〇〇マンション101" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 3（所属は入力だけ：表示ラベル等は出さない） -->
-      <section class="step" data-step="3">
-        <div class="head">
-          <div class="badge b3">AFFILIATION</div>
-          <h1>所属（任意）</h1>
-          <p>協力会社 / FC / 個人 いずれでも登録必須です。</p>
-        </div>
-
-        <div class="seg seg3">
-          <button class="segBtn s1" type="button" data-value="協力会社">協力会社</button>
-          <button class="segBtn s2" type="button" data-value="FC">FC</button>
-          <button class="segBtn s3" type="button" data-value="個人">個人</button>
-        </div>
-
-        <input id="affType" type="hidden" value="" />
-
-        <div class="field mt">
-          <label>所属会社名（任意）</label>
-          <input id="company" type="text" placeholder="株式会社〇〇 / 〇〇運送 など" />
-        </div>
-      </section>
-
-      <!-- STEP 4 -->
-      <section class="step" data-step="4">
-        <div class="head">
-          <div class="badge b4">VEHICLE</div>
-          <h1>車両情報</h1>
-          <p>案件案内・稼働可否の確認に必要です。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>車種</label>
-            <select id="vehicleType">
-              <option value="">選択してください</option>
-              <option>軽バン</option>
-              <option>軽トラ</option>
-              <option>幌車</option>
-              <option>クール車</option>
-              <option>その他</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>黒ナンバー</label>
-            <select id="blackPlate">
-              <option value="">選択してください</option>
-              <option>あり</option>
-              <option>なし</option>
-              <option>申請中</option>
-              <option>リース希望</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>車両ナンバー（任意）</label>
-            <input id="plate" type="text" placeholder="鹿児島 480 あ 12-34" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 5 -->
-      <section class="step" data-step="5">
-        <div class="head">
-          <div class="badge b5">LICENSE</div>
-          <h1>運転免許証</h1>
-          <p>表面は必須です（本人確認）。縦長の写真は「上下を自動カット」して見やすく出力します。</p>
-        </div>
-
-        <div class="uploadGrid">
-          <div class="upCard">
-            <div class="upTop">
-              <div class="miniTag">必須</div>
-              <div class="upTitle">表面</div>
-            </div>
-            <input id="licFront" type="file" accept="image/*" />
-            <img id="licFrontPrev" class="preview" alt="" />
-          </div>
-
-          <div class="upCard">
-            <div class="upTop">
-              <div class="miniTag gray">任意</div>
-              <div class="upTitle">裏面</div>
-            </div>
-            <input id="licBack" type="file" accept="image/*" />
-            <img id="licBackPrev" class="preview" alt="" />
-          </div>
-        </div>
-
-        <div class="hintBox">
-          <div class="hintTitle">📌 写真のポイント</div>
-          <ul>
-            <li>免許証が画面いっぱいに入るよう近づいて撮影</li>
-            <li>Galaxy / Androidは写真が重いとPDF作成に時間がかかることがあります</li>
-            <li>ピントを合わせ、ブレないように撮影してください</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- STEP 6 -->
-      <section class="step" data-step="6">
-        <div class="head">
-          <div class="badge b6">BANK</div>
-          <h1>銀行振込先</h1>
-          <p>報酬支払いのために必要です。</p>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label>銀行名</label>
-            <input id="bank" type="text" placeholder="〇〇銀行 / ゆうちょ銀行 など" />
-          </div>
-
-          <div class="field">
-            <label>口座種別</label>
-            <select id="acctType">
-              <option value="">選択してください</option>
-              <option>普通</option>
-              <option>当座</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>口座番号</label>
-            <input id="acctNo" type="text" inputmode="numeric" placeholder="1234567" />
-          </div>
-
-          <div class="field">
-            <label>口座名義（カナ）</label>
-            <input id="acctName" type="text" placeholder="ヤマダ タロウ" />
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 7 -->
-      <section class="step" data-step="7">
-        <div class="head">
-          <div class="badge b7">TERMS</div>
-          <h1>登録規約</h1>
-          <p>内容を確認し、同意して次へ進んでください。</p>
-        </div>
-
-        <div class="termsBox">
-          <ul>
-            <li>本登録はドライバー本人が行うものとします。</li>
-            <li>入力内容および提出書類は正確な情報であることを保証してください。</li>
-            <li>虚偽申告・不正が判明した場合、登録・契約をお断りする場合があります。</li>
-            <li>取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。</li>
-            <li>登録後、OFA GROUP担当者より連絡を行い案件を決定します。</li>
-          </ul>
-        </div>
-
-        <label class="agreeRow">
-          <input id="agree" type="checkbox" />
-          <span class="agreeText">上記内容に同意します</span>
-        </label>
-
-        <div class="note">
-          ※ 同意チェックがない場合、次へ進めません。
-        </div>
-      </section>
-
-      <!-- STEP 8 -->
-      <section class="step" data-step="8">
-        <div class="head">
-          <div class="badge b8">DONE</div>
-          <h1>登録完了</h1>
-          <p class="doneText">
-            <b>導線：</b><br />
-            ① 先に <b>OFAメンバーシップLINE</b> を開いて追加<br />
-            ② 次に <b>登録PDFを作成</b>（PDFを開きます）<br />
-            ③ PDF画面の <b>共有ボタン</b> からLINEで送信してください
-          </p>
-        </div>
-
-        <div class="btnRow3">
-          <button id="openLineBtn" class="btnLine" type="button">メンバーシップLINEを開く</button>
-          <button id="makePdfBtn" class="btnPrimary" type="button">登録PDFを作成（開く）</button>
-          <button id="howBtn" class="btnGhost" type="button">送信方法</button>
-        </div>
-
-        <a id="savePdfLink" class="saveLink" href="#" download="OFA_driver_entry.pdf" aria-disabled="true">
-          予備：PDFを保存（必要な人だけ）
-        </a>
-
-        <div class="subHelp">
-          ※ iPhone / LINEブラウザは自動送信されません。PDF表示後に「共有」→「LINE」で送信してください。<br />
-          ※ Galaxy等で反応が遅い場合は、PDF作成中の表示が消えるまでお待ちください。
-        </div>
-      </section>
-
-      <!-- Bottom Navigation -->
-      <div class="nav">
-        <button id="backBtn" class="btnGhost" type="button">戻る</button>
-        <button id="nextBtn" class="btnPrimary" type="button">次へ</button>
-      </div>
-
-      <div id="toast" class="toast"></div>
-    </main>
-
-    <footer class="foot">
-      <div class="footLeft">© OFA GROUP</div>
-      <div class="footRight">One for All, All for One</div>
-    </footer>
-  </div>
-
-  <!-- ===== PDF用の隠しA4（ここを画像化してPDFにします） ===== -->
-  <div id="pdfPaper" class="pdfPaper" aria-hidden="true">
-    <div class="pdfHeader">
-      <div class="pdfHeaderLeft">
-        <img src="./assets/ofa-logo-192.png" class="pdfLogo" alt="OFA" />
-        <div>
-          <div class="pdfTitle">OFA GROUP ドライバー登録シート</div>
-          <div class="pdfSub">※ 本シートは契約前の正式情報として扱います</div>
-        </div>
-      </div>
-      <div class="pdfHeaderRight">
-        <div class="pdfDate" id="pdfDate"></div>
-        <div class="pdfMotto">One for All, All for One</div>
+      <div class="brandText">
+        <div class="brandTitle">OFA GROUP</div>
+        <div class="brandSub">Driver Registration App</div>
       </div>
     </div>
 
-    <div class="pdfGrid">
-      <div class="pdfItem"><div class="pdfLabel">氏名（漢字）</div><div class="pdfValue" id="p_name"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">フリガナ</div><div class="pdfValue" id="p_kana"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">電話番号</div><div class="pdfValue" id="p_phone"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">メール（任意）</div><div class="pdfValue" id="p_email"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">生年月日（任意）</div><div class="pdfValue" id="p_birth"></div></div>
+    <div class="stepPill">
+      <span class="dot"></span>
+      <span id="stepLabel">STEP 1 / 8</span>
+    </div>
+  </header>
 
-      <div class="pdfItem" style="grid-column: 1 / -1;">
-        <div class="pdfLabel">住所</div>
-        <div class="pdfValue" id="p_address"></div>
-      </div>
+  <section class="progressWrap">
+    <div class="progressBar">
+      <div id="progressFill" class="progressFill"></div>
+    </div>
+    <div class="progressDots" id="progressDots" aria-hidden="true"></div>
+  </section>
 
-      <div class="pdfItem"><div class="pdfLabel">所属（任意）</div><div class="pdfValue" id="p_aff"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">所属会社名（任意）</div><div class="pdfValue" id="p_company"></div></div>
-
-      <div class="pdfItem"><div class="pdfLabel">車種</div><div class="pdfValue" id="p_vehicleType"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">黒ナンバー</div><div class="pdfValue" id="p_blackPlate"></div></div>
-
-      <div class="pdfItem" style="grid-column: 1 / -1;">
-        <div class="pdfLabel">車両ナンバー（任意）</div>
-        <div class="pdfValue" id="p_plate"></div>
-      </div>
-
-      <div class="pdfItem"><div class="pdfLabel">銀行名</div><div class="pdfValue" id="p_bank"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">口座種別</div><div class="pdfValue" id="p_acctType"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">口座番号</div><div class="pdfValue" id="p_acctNo"></div></div>
-      <div class="pdfItem"><div class="pdfLabel">口座名義（カナ）</div><div class="pdfValue" id="p_acctName"></div></div>
+  <main class="card">
+    <div class="chipRow">
+      <div id="chip" class="chip">PROFILE</div>
     </div>
 
-    <div class="pdfSectionTitle">運転免許証（画像）</div>
-    <div class="pdfImgGrid">
-      <div class="pdfImgBox">
-        <div class="pdfImgLabel">表面（必須）</div>
-        <img id="p_licFront" alt="" />
-      </div>
-      <div class="pdfImgBox">
-        <div class="pdfImgLabel">裏面（任意）</div>
-        <img id="p_licBack" alt="" />
-      </div>
+    <h1 id="title" class="title">ドライバー基本情報</h1>
+    <p id="desc" class="desc">本登録はドライバーご本人が行ってください。</p>
+
+    <!-- Step container -->
+    <div id="stepContainer" class="stepContainer"></div>
+
+    <!-- Footer Buttons -->
+    <div class="footerBtns">
+      <button id="btnBack" class="btn btnGhost" type="button">戻る</button>
+      <button id="btnNext" class="btn btnPrimary" type="button">次へ</button>
     </div>
 
-    <div class="pdfFooterNote">
-      登録後、OFA GROUP担当者より連絡を行い案件を決定します。／ 本PDFはOFAメンバーシップLINEへ送信してください。
-    </div>
-  </div>
+    <div id="hint" class="hint"></div>
+  </main>
 
-  <!-- 処理中オーバーレイ -->
-  <div id="busy" class="busy" aria-hidden="true">
-    <div class="busyBox">
-      <div class="spinner"></div>
-      <div class="busyTitle">PDFを作成中です…</div>
-      <div class="busySub">端末によって30秒ほどかかる場合があります（そのままお待ちください）</div>
-    </div>
-  </div>
+  <footer class="footerText">
+    <div>© OFA GROUP</div>
+    <div class="motto">One for All, All for One</div>
+  </footer>
 
-  <!-- 送信方法モーダル -->
-  <div id="howModal" class="modal" aria-hidden="true">
-    <div class="modalBg" id="howCloseBg"></div>
-    <div class="modalBox">
-      <div class="modalTitle">送信方法（iPhone / LINEブラウザ）</div>
-      <ol class="modalList">
-        <li>先に「メンバーシップLINEを開く」→ 追加</li>
-        <li>戻って「登録PDFを作成（開く）」</li>
-        <li>PDF画面で「共有」ボタン（↑）</li>
-        <li>「LINE」を選択して送信</li>
-      </ol>
-      <div class="modalNote">
-        ※ LINEアプリ内ブラウザで共有先にLINEが出ない場合：<br />
-        右上「…」→「他のアプリで開く」→ Safariで開いて共有してください。
-      </div>
-      <button id="howCloseBtn" class="btnGhost" type="button">閉じる</button>
-    </div>
-  </div>
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="./app.js"></script>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
-    }
-  </script>
+  <script defer src="./app.js?v=20260201_1"></script>
 </body>
 </html>
