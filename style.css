@@ -6,10 +6,8 @@
   --card:#ffffffd8;
   --text:#0b1220;
   --muted:#5b6475;
-  --line:#00c300;
   --shadow: 0 18px 50px rgba(0,0,0,.18);
   --radius: 22px;
-  --radius2: 18px;
   --safeTop: env(safe-area-inset-top);
   --safeBottom: env(safe-area-inset-bottom);
 }
@@ -25,6 +23,7 @@ body{
 
 .bg{
   position:fixed; inset:-40px;
+  pointer-events:none; /* ← Safariで“次へが押せない”原因を潰す */
   background:
     radial-gradient(900px 500px at 10% 10%, rgba(255,122,0,.55), transparent 60%),
     radial-gradient(800px 550px at 90% 15%, rgba(106,0,255,.45), transparent 60%),
@@ -57,22 +56,13 @@ body{
   background: rgba(255,255,255,.75);
   display:grid;place-items:center;
   box-shadow: 0 8px 20px rgba(0,0,0,.10);
-  position:relative;
   overflow:hidden;
 }
 .logoImg{width:34px;height:34px;object-fit:contain}
-.logoFallbackBadge{
-  display:none;
-  font-weight:900;
-  font-size:14px;
-  letter-spacing:.08em;
-  color:#ff7a00;
-}
-.logoWrap.logoFallback .logoFallbackBadge{display:block}
 
 .brand{min-width:0}
-.brandName{font-weight:900;letter-spacing:.06em}
-.brandSub{font-size:12px;color:var(--muted);margin-top:2px}
+.brandName{font-weight:900;letter-spacing:.06em;}
+.brandSub{font-size:12px;color:var(--muted);margin-top:2px;}
 
 .chip{
   display:flex;align-items:center;gap:8px;
@@ -108,9 +98,16 @@ body{
   background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4));
   box-shadow: 0 6px 18px rgba(0,0,0,.18);
 }
+
 .dots{display:flex;gap:9px;justify-content:center;margin-top:12px}
-.d{width:10px;height:10px;border-radius:999px;background: rgba(255,255,255,.55)}
-.d.on{width:18px;background: radial-gradient(circle at 30% 30%, #ff7a00, #6a00ff)}
+.d{
+  width:10px;height:10px;border-radius:999px;
+  background: rgba(255,255,255,.55);
+}
+.d.on{
+  width:18px;
+  background: radial-gradient(circle at 30% 30%, #ff7a00, #6a00ff);
+}
 
 .card{
   margin-top:14px;
@@ -141,8 +138,13 @@ body{
 .b7{border-left:6px solid #00c300}
 .b8{border-left:6px solid #6a00ff}
 
-h1{margin: 12px 0 6px;font-size: 26px;letter-spacing:.02em}
+h1{
+  margin: 12px 0 6px;
+  font-size: 26px;
+  letter-spacing:.02em;
+}
 .head p{margin:0 0 10px;color:var(--muted);line-height:1.5}
+.doneText{line-height:1.65}
 
 .step{display:none}
 .step.active{display:block}
@@ -154,6 +156,7 @@ h1{margin: 12px 0 6px;font-size: 26px;letter-spacing:.02em}
 }
 .field{display:flex;flex-direction:column;gap:6px}
 label{font-size:13px;color:#2a3242;font-weight:800}
+
 input,select{
   width:100%;
   padding: 14px 14px;
@@ -168,12 +171,12 @@ input:focus,select:focus{
   border-color: rgba(255,122,0,.45);
   box-shadow: 0 14px 30px rgba(255,122,0,.18);
 }
+
 .mt{margin-top:10px}
 
-.seg{display:flex;gap:10px;flex-wrap:wrap;margin-top: 6px}
+.seg{display:flex;gap:10px;flex-wrap:wrap;margin-top: 6px;}
+.seg3 .segBtn{flex:1; min-width: 120px;}
 .segBtn{
-  flex:1;
-  min-width: 120px;
   padding: 14px 12px;
   border-radius: 18px;
   border:1px solid rgba(30,40,60,.10);
@@ -181,6 +184,9 @@ input:focus,select:focus{
   font-weight:900;
   letter-spacing:.06em;
   box-shadow: 0 12px 26px rgba(0,0,0,.06);
+  cursor:pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 .segBtn.active{
   border-color: transparent;
@@ -219,6 +225,17 @@ input:focus,select:focus{
   max-height: 260px;
 }
 
+.hintBox{
+  margin-top: 12px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(30,40,60,.10);
+  padding: 12px 14px;
+  box-shadow: 0 14px 30px rgba(0,0,0,.06);
+}
+.hintTitle{font-weight:900;margin-bottom:8px}
+.hintBox ul{margin:0;padding-left:18px;color:#2b3445;line-height:1.7}
+
 .termsBox{
   margin-top: 10px;
   border-radius: 18px;
@@ -228,6 +245,7 @@ input:focus,select:focus{
   box-shadow: 0 14px 30px rgba(0,0,0,.06);
 }
 .termsBox ul{margin:0;padding-left:18px;color:#2b3445;line-height:1.7}
+
 .agreeRow{
   display:flex;
   align-items:center;
@@ -242,7 +260,6 @@ input:focus,select:focus{
 .agreeText{font-weight:900;letter-spacing:.02em}
 .note{margin-top:8px;color:var(--muted);font-size:13px}
 
-.ctaStack{display:flex;flex-direction:column;gap:12px;margin-top:12px}
 .btnPrimary,.btnLine,.btnGhost{
   border:none; cursor:pointer;
   border-radius: 999px;
@@ -253,12 +270,13 @@ input:focus,select:focus{
   text-align:center;
   text-decoration:none;
   box-shadow: 0 18px 40px rgba(0,0,0,.16);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 .btnPrimary{
   background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3));
   color:white;
 }
-.btnPrimary[disabled]{opacity:.45;filter:saturate(.7);cursor:not-allowed}
 .btnLine{
   background: linear-gradient(90deg, rgba(0,195,0,.95), rgba(0,208,132,.95));
   color:white;
@@ -270,10 +288,36 @@ input:focus,select:focus{
   box-shadow: 0 14px 30px rgba(0,0,0,.08);
 }
 
-.nav{display:flex; gap:12px;margin-top: 14px}
+.btnRow3{
+  display:flex;
+  gap:12px;
+  margin-top: 14px;
+}
+.btnRow3 > *{flex:1}
+
+.saveLink{
+  display:block;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: 999px;
+  text-align:center;
+  text-decoration:none;
+  font-weight: 900;
+  border: 1px dashed rgba(30,40,60,.25);
+  color:#0b1220;
+  background: rgba(255,255,255,.65);
+  opacity:.55;
+  pointer-events:none;
+}
+
+.subHelp{color:var(--muted);font-size:13px;line-height:1.55;margin-top:10px}
+
+.nav{
+  display:flex; gap:12px;
+  margin-top: 14px;
+}
 .nav .btnGhost{flex:1}
 .nav .btnPrimary{flex:1}
-.subHelp{color:var(--muted);font-size:13px;line-height:1.55}
 
 .toast{
   position:fixed;
@@ -290,7 +334,7 @@ input:focus,select:focus{
   opacity:0;
   pointer-events:none;
   transition: .22s ease;
-  z-index: 99;
+  z-index: 9999;
   max-width: 92vw;
   text-align:center;
 }
@@ -308,6 +352,7 @@ input:focus,select:focus{
 @media (max-width: 720px){
   .grid{grid-template-columns:1fr}
   .uploadGrid{grid-template-columns:1fr}
+  .btnRow3{flex-direction:column}
   h1{font-size:24px}
 }
 
@@ -316,39 +361,28 @@ input:focus,select:focus{
   position: fixed;
   left:-99999px;
   top:0;
-  width: 794px;
+  width: 794px;     /* A4 @ 96dpi */
+  min-height: 1123px;
   background: #fff;
   color:#111;
-}
-.pdfPage{
-  width: 794px;
-  height: 1123px;
-  padding: 26px;
-  background:#fff;
-  overflow:hidden;
+  padding: 24px;
 }
 .pdfHeader{
   display:flex;
   align-items:flex-end;
   justify-content:space-between;
   gap: 12px;
-  border-bottom: 4px solid #ff7a00;
+  border-bottom: 5px solid #ff7a00;
   padding-bottom: 10px;
   margin-bottom: 14px;
 }
+.pdfHeaderLeft{display:flex; gap:12px; align-items:center;}
+.pdfLogo{width:44px;height:44px;object-fit:contain}
 .pdfTitle{font-size:22px;font-weight:900}
+.pdfSub{font-size:12px;color:#444;font-weight:800;margin-top:2px}
+.pdfHeaderRight{text-align:right}
 .pdfDate{font-size:12px;color:#444;font-weight:800}
-.pdfRight{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.pdfMotto{font-size:12px;color:#ff7a00;font-weight:900;white-space:nowrap}
-.pdfPageNo{
-  font-size:12px;
-  font-weight:900;
-  color:#111;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid #eee;
-  background:#fafafa;
-}
+.pdfMotto{font-size:12px;color:#ff7a00;font-weight:900;white-space:nowrap;margin-top:4px}
 
 .pdfGrid{
   display:grid;
@@ -364,10 +398,14 @@ input:focus,select:focus{
 .pdfLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:6px}
 .pdfValue{font-size:14px;font-weight:900;color:#111;word-break:break-word}
 
-.pdfSectionTitle{margin-top: 8px;font-size: 16px;font-weight: 900}
+.pdfSectionTitle{
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 900;
+}
 
 .pdfImgGrid{
-  margin-top: 12px;
+  margin-top: 10px;
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -378,21 +416,69 @@ input:focus,select:focus{
   padding: 10px;
 }
 .pdfImgLabel{font-size:12px;color:#555;font-weight:900;margin-bottom:8px}
-
-/* 免許証は「読みやすさ優先」：上下だけトリミングして横幅最大 */
 .pdfImgBox img{
   width:100%;
-  height: 520px;
-  object-fit: cover;     /* coverで上下トリミング */
-  object-position: 50% 50%;
+  height: 260px;
+  /* 免許証は縮小で文字が潰れやすいので “cover” で大きく見せる */
+  object-fit: cover;
   border-radius: 10px;
   background:#fafafa;
   border:1px solid #eee;
 }
-
 .pdfFooterNote{
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 12px;
   color:#444;
   font-weight: 900;
+  line-height:1.5;
 }
+
+/* busy overlay */
+.busy{
+  position:fixed; inset:0;
+  display:none;
+  background: rgba(10,16,26,.35);
+  z-index: 99999;
+  backdrop-filter: blur(6px);
+}
+.busy.on{display:grid; place-items:center;}
+.busyBox{
+  width:min(92vw, 420px);
+  background: rgba(255,255,255,.92);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.25);
+  text-align:center;
+}
+.spinner{
+  width:38px;height:38px;border-radius:999px;
+  border:4px solid rgba(0,0,0,.10);
+  border-top-color: rgba(255,122,0,.95);
+  margin: 0 auto 10px;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg);} }
+.busyTitle{font-weight:900}
+.busySub{color:#444;font-size:12px;line-height:1.45;margin-top:6px}
+
+/* modal */
+.modal{
+  position:fixed; inset:0;
+  display:none;
+  z-index: 99998;
+}
+.modal.on{display:block}
+.modalBg{position:absolute; inset:0; background:rgba(0,0,0,.40)}
+.modalBox{
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(92vw, 460px);
+  background:#fff;
+  border-radius:18px;
+  padding: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.28);
+}
+.modalTitle{font-weight:900; font-size:16px; margin-bottom:10px}
+.modalList{margin:0 0 10px 18px; line-height:1.55}
+.modalNote{font-size:12px;color:#444;line-height:1.45;margin-bottom:12px}
