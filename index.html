@@ -1,80 +1,126 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>OFA GROUP Driver Registration App</title>
-
-  <link rel="stylesheet" href="./styles.css" />
-  <script defer src="./app.js"></script>
-
-  <!-- UI用フォント（PDFには使わない） -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OFA GROUP Driver Entry</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <main class="app" id="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="brand">
-        <div class="logoWrap">
-          <img id="ofaLogo" class="logo" src="./assets/ofa-logo.png" alt="OFA" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex';">
-          <div id="logoFallback" class="logoFallback" style="display:none;">OFA</div>
-        </div>
+<header class="header">
+  <div class="logo">
+    <img src="assets/ofa-logo.png" alt="OFA GROUP" />
+    <div>
+      <strong>OFA GROUP</strong>
+      <span>Driver Registration App</span>
+    </div>
+  </div>
+  <div class="step">STEP <span id="stepNum">1</span> / 8</div>
+</header>
 
-        <div class="brandText">
-          <div class="brandTitle">OFA GROUP</div>
-          <div class="brandSub">Driver Registration App</div>
-        </div>
-      </div>
+<main id="app">
 
-      <div class="stepPill">
-        <span class="dot"></span>
-        <span id="stepLabel">STEP 1 / 8</span>
-      </div>
-    </header>
+<!-- STEP 1 -->
+<section class="step active">
+  <h2>ドライバー基本情報</h2>
 
-    <!-- Progress -->
-    <section class="progressCard">
-      <div class="progressBar">
-        <div class="progressFill" id="progressFill"></div>
-      </div>
-      <div class="progressDots" id="progressDots"></div>
-    </section>
+  <label>氏名（漢字）<input id="name" required></label>
+  <label>フリガナ<input id="kana" required></label>
+  <label>電話番号<input id="tel" required placeholder="090xxxxxxxx"></label>
+  <label>メールアドレス<input id="email"></label>
+  <label>生年月日<input type="date" id="birth" required></label>
 
-    <!-- Card -->
-    <section class="card">
-      <div class="cardTag" id="cardTag">
-        <span class="tagMark"></span>
-        <span class="tagText" id="tagText">PROFILE</span>
-      </div>
+  <button onclick="next()">次へ</button>
+</section>
 
-      <h1 class="cardTitle" id="cardTitle">ドライバー基本情報</h1>
-      <p class="cardDesc" id="cardDesc">本登録はドライバーご本人が行ってください。</p>
+<!-- STEP 2 -->
+<section class="step">
+  <h2>住所情報</h2>
+  <label>郵便番号<input id="zip"></label>
+  <label>都道府県<input id="pref"></label>
+  <label>市区町村<input id="city"></label>
+  <label>番地・建物名<input id="address"></label>
+  <button onclick="prev()">戻る</button>
+  <button onclick="next()">次へ</button>
+</section>
 
-      <!-- Steps container -->
-      <div id="steps"></div>
+<!-- STEP 3 -->
+<section class="step">
+  <h2>所属・区分</h2>
+  <label>所属区分
+    <select id="affiliation">
+      <option>OFA直</option>
+      <option>協力会社</option>
+      <option>フランチャイズ</option>
+    </select>
+  </label>
+  <label>エリア<input id="area"></label>
+  <button onclick="prev()">戻る</button>
+  <button onclick="next()">次へ</button>
+</section>
 
-      <!-- Nav -->
-      <div class="nav">
-        <button type="button" class="btn btnGhost" id="btnBack">戻る</button>
-        <button type="button" class="btn btnPrimary" id="btnNext">次へ</button>
-      </div>
-    </section>
+<!-- STEP 4 -->
+<section class="step">
+  <h2>車両情報</h2>
+  <label>車種
+    <select id="vehicle">
+      <option>軽バン</option>
+      <option>軽トラ</option>
+      <option>幌車</option>
+      <option>クール車</option>
+      <option>その他</option>
+    </select>
+  </label>
 
-    <footer class="footer">
-      <div>© OFA GROUP</div>
-      <div>One for All, All for One</div>
-    </footer>
-  </main>
+  <label>黒ナンバー
+    <select id="black">
+      <option>あり</option>
+      <option>なし</option>
+      <option>申請中</option>
+      <option>リース希望</option>
+    </select>
+  </label>
 
-  <!-- Toast -->
-  <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
+  <button onclick="prev()">戻る</button>
+  <button onclick="next()">次へ</button>
+</section>
 
-  <!-- jsPDF (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<!-- STEP 5 -->
+<section class="step">
+  <h2>銀行情報</h2>
+  <label>銀行名<input id="bank"></label>
+  <label>支店名<input id="branch"></label>
+  <label>口座種別<input id="type"></label>
+  <label>口座番号<input id="number"></label>
+  <button onclick="prev()">戻る</button>
+  <button onclick="next()">次へ</button>
+</section>
+
+<!-- STEP 6 -->
+<section class="step">
+  <h2>確認</h2>
+  <p>内容を確認してください</p>
+  <button onclick="prev()">戻る</button>
+  <button onclick="next()">登録</button>
+</section>
+
+<!-- STEP 7 -->
+<section class="step">
+  <h2>PDF作成</h2>
+  <button onclick="createPDF()">登録PDFを作成</button>
+</section>
+
+<!-- STEP 8 -->
+<section class="step">
+  <h2>登録完了</h2>
+  <a class="line" href="https://line.me/R/ti/p/%40ofa">メンバーシップLINEを開く</a>
+  <button onclick="sharePDF()">PDFを共有</button>
+</section>
+
+</main>
+
+<script src="app.js"></script>
 </body>
 </html>
