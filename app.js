@@ -1,844 +1,817 @@
 /* =========================
    OFA Driver Entry - FULL
-   日本語PDF：NotoSansJPを埋め込み
-   ========================= */
+   - iOS/Androidでボタン反応しない問題を潰す
+   - 日本語PDF (NotoSansJP) を埋め込み
+   - 免許証画像は縮小せず上下トリミングで見やすく
+========================= */
 
-const OFA_LOGO_URL = "./assets/ofa_logo.png"; // ←ロゴ画像を置く（なければ差し替え）
-const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/8x437Vt"; // ←指定URL
-
-const TOTAL_STEPS = 8;
+const OFA_MEMBERSHIP_LINE_URL = "https://lin.ee/8x437Vt";
 
 const state = {
   step: 1,
-  agree: false,
   data: {
-    // STEP1 基本
+    // 1
     nameKanji: "",
     nameKana: "",
     phone: "",
     email: "",
-    birthday: "",
-    zip: "",
+    birth: "",
+    // 2
     address: "",
-
-    // STEP2 所属（表示は必要最低限）
-    affiliation: "協力会社", // 協力会社 / FC / 個人
-    affiliationCompany: "",  // 任意
-
-    // STEP3 車両（あなたの指定に合わせる）
-    vehicleType: "",         // 軽バン/軽トラ/幌車/クール車/その他
-    plate: "",               // 車両ナンバー（任意）
-    blackPlate: "",          // あり/なし/申請中/リース希望
-
-    // STEP4 口座（報酬振込）
+    // 3
+    affiliationType: "", // 協力会社 / FC / 個人
+    affiliationCompany: "",
+    // 4
+    carType: "",
+    blackPlate: "", // あり/なし/申請中/リース希望
+    carNumber: "",
+    // 5
     bankName: "",
-    branchName: "",
-    accountType: "普通",
+    accountType: "",
     accountNumber: "",
     accountNameKana: "",
-
-    // STEP5 画像
-    licenseFront: null,
-    licenseBack: null
+    // 6
+    licenseFrontFile: null,
+    licenseBackFile: null,
+    licenseFrontDataUrl: "",
+    licenseBackDataUrl: "",
+    // 7
+    agreed: false
   },
-  assets: {
-    jpFontReady: false,
-    jpFontName: "NotoSansJP"
-  }
+  pdfBlob: null,
+  pdfFileName: ""
 };
 
-/* ---------- UI helpers ---------- */
-const $ = (sel) => document.querySelector(sel);
+const $ = (id) => document.getElementById(id);
 
+/* ============ Tap Fix (重要) ============ */
+function bindTap(el, handler){
+  if(!el) return;
+  const safeHandler = (e) => {
+    // Androidでclickが死ぬ / iOSで二重発火対策
+    try { e.preventDefault?.(); } catch(_){}
+    try { e.stopPropagation?.(); } catch(_){}
+    handler(e);
+  };
+
+  // ✅3系統で確実に拾う
+  el.addEventListener("click", safeHandler, { passive:false });
+  el.addEventListener("pointerup", safeHandler, { passive:false });
+  el.addEventListener("touchend", safeHandler, { passive:false });
+}
+
+/* ============ Toast ============ */
+let toastTimer = null;
 function toast(msg){
-  let t = $(".toast");
-  if(!t){
-    t = document.createElement("div");
-    t.className = "toast";
-    document.body.appendChild(t);
-  }
+  const t = $("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1800);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 2200);
 }
 
-function el(tag, attrs={}, children=[]){
-  const n = document.createElement(tag);
-  Object.entries(attrs).forEach(([k,v])=>{
-    if(k === "class") n.className = v;
-    else if(k === "html") n.innerHTML = v;
-    else if(k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v, {passive:false});
-    else n.setAttribute(k, v);
-  });
-  (Array.isArray(children) ? children : [children]).filter(Boolean).forEach(c=>{
-    if(typeof c === "string") n.appendChild(document.createTextNode(c));
-    else n.appendChild(c);
-  });
-  return n;
+/* ============ UI ============ */
+function buildDots(){
+  const wrap = $("progressDots");
+  wrap.innerHTML = "";
+  for(let i=1;i<=8;i++){
+    const s = document.createElement("span");
+    if(i === state.step) s.classList.add("active");
+    wrap.appendChild(s);
+  }
+}
+function updateHeader(){
+  $("stepLabel").textContent = `STEP ${state.step} / 8`;
+  const pct = (state.step/8)*100;
+  $("progressFill").style.width = `${pct}%`;
+  buildDots();
 }
 
-function field(label, input, hintText){
-  return el("div",{class:"field"},[
-    el("div",{class:"label"},label),
-    input,
-    hintText ? el("div",{class:"hint"},hintText) : null
-  ]);
-}
+/* ============ Steps rendering ============ */
+function render(){
+  updateHeader();
 
-function inputText(placeholder, value, onInput, opts={}){
-  const i = el("input",{
-    class:"input",
-    placeholder,
-    value: value ?? "",
-    inputmode: opts.inputmode || "",
-    type: opts.type || "text",
-    autocomplete: opts.autocomplete || "off",
-    oninput: (e)=> onInput(e.target.value)
-  });
-  return i;
-}
+  const stepsEl = $("steps");
+  stepsEl.innerHTML = "";
 
-function inputDate(value, onInput){
-  return el("input",{
-    class:"input",
-    type:"date",
-    value: value ?? "",
-    oninput:(e)=>onInput(e.target.value)
-  });
-}
+  // Tag/Title
+  const meta = getStepMeta(state.step);
+  $("tagText").textContent = meta.tag;
+  $("cardTitle").textContent = meta.title;
+  $("cardDesc").textContent = meta.desc;
 
-function selectBox(value, onChange, options){
-  const s = el("select",{class:"input", onchange:(e)=>onChange(e.target.value)});
-  s.appendChild(el("option",{value:""}, "選択してください"));
-  options.forEach(o=>{
-    s.appendChild(el("option",{value:o, ...(o===value?{selected:"selected"}:{})}, o));
-  });
-  return s;
-}
+  // Back/Next visibility
+  $("btnBack").style.visibility = (state.step === 1) ? "hidden" : "visible";
+  $("btnNext").textContent = (state.step === 8) ? "最初から" : "次へ";
 
-function btn(label, kind, handler){
-  const b = el("button",{
-    class:`btn ${kind}`,
-    type:"button",
-    onclick:(e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-      handler?.(e);
-    },
-    ontouchstart:(e)=>{
-      // 一部端末でclickが飛ばない対策
-      e.preventDefault();
-      handler?.(e);
+  // Render content
+  const content = document.createElement("div");
+  content.className = "formGrid";
+  content.appendChild(buildStep(state.step));
+  stepsEl.appendChild(content);
+
+  // Bind navigation
+  $("btnNext").disabled = false;
+  $("btnBack").disabled = false;
+
+  bindTap($("btnBack"), ()=> {
+    if(state.step > 1){
+      state.step--;
+      render();
     }
-  }, label);
-  return b;
+  });
+
+  bindTap($("btnNext"), ()=> {
+    if(state.step === 8){
+      // reset
+      state.step = 1;
+      render();
+      return;
+    }
+    if(!validateStep(state.step)){
+      return;
+    }
+    state.step++;
+    render();
+  });
 }
 
-/* ---------- header/progress ---------- */
-function renderShell(content){
-  const wrap = el("div",{class:"wrap"},[
-    el("div",{class:"header"},[
-      el("div",{class:"brand"},[
-        el("div",{class:"logoBox"},[
-          el("img",{src:OFA_LOGO_URL, alt:"OFA"})
-        ]),
-        el("div",{},[
-          el("div",{class:"brandTitle"},"OFA GROUP"),
-          el("div",{class:"brandSub"},"Driver Registration App")
-        ])
-      ]),
-      el("div",{class:"stepPill"},`STEP ${state.step} / ${TOTAL_STEPS}`)
-    ]),
-    el("div",{class:"progressWrap"},[
-      el("div",{class:"progressBar"},[
-        el("div",{style:`width:${Math.round((state.step-1)/(TOTAL_STEPS-1)*100)}%`})
-      ]),
-      el("div",{class:"dots"},
-        Array.from({length:TOTAL_STEPS}).map((_,i)=>{
-          const idx = i+1;
-          return el("div",{class:`dot ${idx===state.step?"active":""}`});
-        })
-      )
-    ]),
-    content,
-    el("div",{class:"footer"},[
-      el("div",{}, "© OFA GROUP"),
-      el("div",{}, "One for All, All for One")
-    ])
-  ]);
+function getStepMeta(step){
+  switch(step){
+    case 1: return { tag:"PROFILE", title:"ドライバー基本情報", desc:"本登録はドライバーご本人が行ってください。" };
+    case 2: return { tag:"ADDRESS", title:"住所", desc:"契約・書類送付のため住所を入力してください。" };
+    case 3: return { tag:"AFFILIATION", title:"所属情報", desc:"あなたの所属に近いものを選択してください。" };
+    case 4: return { tag:"VEHICLE", title:"車両情報", desc:"稼働に必要な車両情報を入力してください。" };
+    case 5: return { tag:"BANK", title:"口座情報", desc:"報酬振込先口座を入力してください。" };
+    case 6: return { tag:"DOCUMENTS", title:"提出画像", desc:"免許証画像をアップロードしてください（表面必須）。" };
+    case 7: return { tag:"TERMS", title:"確認事項", desc:"内容を確認し、同意して次へ進んでください。" };
+    case 8: return { tag:"DONE", title:"登録完了", desc:"LINE追加 → PDF作成 → LINE送信 の順番でお願いします。" };
+    default: return { tag:"", title:"", desc:"" };
+  }
+}
+
+function buildStep(step){
+  switch(step){
+    case 1: return step1();
+    case 2: return step2();
+    case 3: return step3();
+    case 4: return step4();
+    case 5: return step5();
+    case 6: return step6();
+    case 7: return step7();
+    case 8: return step8();
+    default: return document.createTextNode("");
+  }
+}
+
+/* ============ Step 1 ============ */
+function step1(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
+
+  wrap.appendChild(fieldText("氏名（漢字）", "例）山田 太郎", state.data.nameKanji, (v)=> state.data.nameKanji=v, true));
+  wrap.appendChild(fieldText("フリガナ", "例）ヤマダ タロウ", state.data.nameKana, (v)=> state.data.nameKana=v, true));
+  wrap.appendChild(fieldText("電話番号", "090xxxxxxxx ※ハイフンなしでもOK", state.data.phone, (v)=> state.data.phone=v, true, "tel"));
+  wrap.appendChild(fieldText("メールアドレス（任意）", "example@gmail.com", state.data.email, (v)=> state.data.email=v, false, "email"));
+  wrap.appendChild(fieldText("生年月日", "1991/07/31", state.data.birth, (v)=> state.data.birth=v, true, "text"));
+
   return wrap;
 }
 
-function goNext(){
-  if(!validateStep(state.step)) return;
-  state.step = Math.min(TOTAL_STEPS, state.step+1);
-  render();
-}
-function goBack(){
-  state.step = Math.max(1, state.step-1);
-  render();
+/* ============ Step 2 ============ */
+function step2(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
+  wrap.appendChild(fieldTextarea("住所", "例）鹿児島県鹿児島市…", state.data.address, (v)=> state.data.address=v, true));
+  return wrap;
 }
 
-/* ---------- validation ---------- */
-function validateEmail(s){
-  if(!s) return true; // 任意
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-}
-function validatePhone(s){
-  if(!s) return false;
-  const t = s.replace(/[^\d+]/g,"");
-  return t.length >= 10;
-}
+/* ============ Step 3 ============ */
+function step3(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
 
-function validateStep(step){
-  const d = state.data;
+  const chips = document.createElement("div");
+  chips.className = "chips";
 
-  if(step===1){
-    if(!d.nameKanji.trim()) return toast("氏名（漢字）を入力してください"), false;
-    if(!d.nameKana.trim())  return toast("フリガナを入力してください"), false;
-    if(!validatePhone(d.phone)) return toast("電話番号を正しく入力してください"), false;
-    if(!validateEmail(d.email)) return toast("メールアドレスを正しく入力してください"), false;
+  const options = ["協力会社","FC","個人"];
+  options.forEach(opt=>{
+    const b = document.createElement("div");
+    b.className = "chip" + (state.data.affiliationType===opt ? " active":"");
+    b.textContent = opt;
+    bindTap(b, ()=>{
+      state.data.affiliationType = opt;
+      render();
+    });
+    chips.appendChild(b);
+  });
 
-    // 生年月日：任意でもOK（押せない原因になりやすいので）
-    // 住所は必須推奨（契約・管理）
-    if(!d.address.trim()) return toast("住所を入力してください"), false;
+  const box = document.createElement("div");
+  box.className = "field";
+  const label = document.createElement("label");
+  label.textContent = "所属区分";
+  box.appendChild(label);
+  box.appendChild(chips);
+  wrap.appendChild(box);
 
-    return true;
-  }
+  wrap.appendChild(fieldText("所属会社名（任意）", "株式会社〇〇 / 〇〇運送など", state.data.affiliationCompany, (v)=> state.data.affiliationCompany=v, false));
 
-  if(step===2){
-    // 所属会社名は任意
-    if(!d.affiliation) return toast("所属区分を選択してください"), false;
-    return true;
-  }
-
-  if(step===3){
-    if(!d.vehicleType) return toast("車種を選択してください"), false;
-    if(!d.blackPlate)  return toast("黒ナンバーを選択してください"), false;
-    return true;
-  }
-
-  if(step===4){
-    if(!d.bankName.trim()) return toast("銀行名を入力してください"), false;
-    if(!d.branchName.trim()) return toast("支店名を入力してください"), false;
-    if(!d.accountType.trim()) return toast("口座種別を選択してください"), false;
-    if(!d.accountNumber.trim()) return toast("口座番号を入力してください"), false;
-    if(!d.accountNameKana.trim()) return toast("口座名義（カナ）を入力してください"), false;
-    return true;
-  }
-
-  if(step===5){
-    if(!d.licenseFront) return toast("免許証表（必須）をアップしてください"), false;
-    // 裏面は任意
-    return true;
-  }
-
-  if(step===6){
-    return true;
-  }
-
-  if(step===7){
-    if(!state.agree) return toast("規約に同意してください"), false;
-    return true;
-  }
-
-  return true;
+  return wrap;
 }
 
-/* ---------- steps ---------- */
-function stepCard(badgeText, badgeColorMode, title, desc, bodyNodes, footerButtons){
-  const badge = el("div",{class:"badge"},[
-    el("i",{style: badgeColorMode==="green" ? "background:var(--gradB)" : ""}),
-    badgeText
-  ]);
+/* ============ Step 4 ============ */
+function step4(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
 
-  return el("div",{class:"card"},[
-    badge,
-    el("h1",{}, title),
-    el("p",{class:"desc"}, desc),
-    ...bodyNodes,
-    footerButtons
-  ]);
+  // 車種
+  wrap.appendChild(fieldSelect("車種", ["選択してください","軽バン","軽トラ","幌車","クール車","その他"], state.data.carType, (v)=> state.data.carType=v, true));
+
+  // 車両ナンバー（任意：リース希望や申請中の場合は空でもOK）
+  wrap.appendChild(fieldText("車両ナンバー（任意）", "例）鹿児島 480 あ 12-34", state.data.carNumber, (v)=> state.data.carNumber=v, false));
+
+  // 黒ナンバー
+  wrap.appendChild(fieldSelect("黒ナンバー", ["選択してください","あり","なし","申請中","リース希望"], state.data.blackPlate, (v)=> state.data.blackPlate=v, true));
+
+  return wrap;
 }
 
-/* STEP1 */
-function renderStep1(){
-  const d = state.data;
+/* ============ Step 5 ============ */
+function step5(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
 
-  const body = el("div",{},[
-    field("氏名（漢字）", inputText("例）山田 太郎", d.nameKanji, v=>d.nameKanji=v)),
-    field("フリガナ", inputText("例）ヤマダ タロウ", d.nameKana, v=>d.nameKana=v)),
-    field("電話番号", inputText("090-xxxx-xxxx", d.phone, v=>d.phone=v, {inputmode:"tel"}), "※ハイフンなしでもOK"),
-    field("メールアドレス（任意）", inputText("example@gmail.com", d.email, v=>d.email=v, {inputmode:"email"})),
-    field("生年月日（任意）", inputDate(d.birthday, v=>d.birthday=v), "※未入力でも進めます"),
-    field("郵便番号（任意）", inputText("例）890-0065", d.zip, v=>d.zip=v, {inputmode:"numeric"})),
-    field("住所（必須）", inputText("例）鹿児島県鹿児島市〇〇…（番地・建物名まで）", d.address, v=>d.address=v))
-  ]);
+  wrap.appendChild(fieldText("銀行名", "例）三井住友銀行", state.data.bankName, (v)=> state.data.bankName=v, true));
+  wrap.appendChild(fieldSelect("口座種別", ["選択してください","普通","当座"], state.data.accountType, (v)=> state.data.accountType=v, true));
+  wrap.appendChild(fieldText("口座番号", "7桁など", state.data.accountNumber, (v)=> state.data.accountNumber=v, true, "tel"));
+  wrap.appendChild(fieldText("口座名義（カナ）", "例）ヤマダタロウ", state.data.accountNameKana, (v)=> state.data.accountNameKana=v, true));
 
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
-
-  return stepCard("PROFILE","", "ドライバー基本情報",
-    "本登録はドライバーご本人が行ってください。",
-    [body],
-    buttons
-  );
+  return wrap;
 }
 
-/* STEP2 */
-function renderStep2(){
-  const d = state.data;
+/* ============ Step 6 ============ */
+function step6(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
 
-  const seg = el("div",{class:"segment"},[
-    el("button",{class:d.affiliation==="協力会社"?"active":"", onclick:()=>{d.affiliation="協力会社"; render();}}, "協力会社"),
-    el("button",{class:d.affiliation==="FC"?"active":"", onclick:()=>{d.affiliation="FC"; render();}}, "FC"),
-    el("button",{class:d.affiliation==="個人"?"active":"", onclick:()=>{d.affiliation="個人"; render();}}, "個人")
-  ]);
+  wrap.appendChild(fileUploader("免許証 表面（必須）", true, (file, url)=>{
+    state.data.licenseFrontFile = file;
+    state.data.licenseFrontDataUrl = url;
+  }, state.data.licenseFrontDataUrl));
 
-  const body = el("div",{},[
-    el("div",{class:"label"},"所属区分"),
-    seg,
-    field("所属会社名（任意）", inputText("株式会社〇〇 / 〇〇運送 など", d.affiliationCompany, v=>d.affiliationCompany=v))
-  ]);
+  wrap.appendChild(fileUploader("免許証 裏面（任意）", false, (file, url)=>{
+    state.data.licenseBackFile = file;
+    state.data.licenseBackDataUrl = url;
+  }, state.data.licenseBackDataUrl));
 
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
-
-  return stepCard("AFFILIATION","green","所属区分",
-    "あなたの所属に近いものを選択してください。",
-    [body],
-    buttons
-  );
+  return wrap;
 }
 
-/* STEP3 */
-function renderStep3(){
-  const d = state.data;
+/* ============ Step 7 ============ */
+function step7(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
 
-  const vehicleOpts = ["軽バン","軽トラ","幌車","クール車","その他"];
-  const blackOpts = ["あり","なし","申請中","リース希望"];
-
-  const body = el("div",{},[
-    field("車種", selectBox(d.vehicleType, v=>d.vehicleType=v, vehicleOpts)),
-    field("車両ナンバー（任意）", inputText("例）鹿児島 480 さ 12-34", d.plate, v=>d.plate=v)),
-    field("黒ナンバー", selectBox(d.blackPlate, v=>d.blackPlate=v, blackOpts))
-  ]);
-
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
-
-  return stepCard("VEHICLE","", "車両情報",
-    "稼働に必要な車両情報を入力してください。",
-    [body],
-    buttons
-  );
-}
-
-/* STEP4 */
-function renderStep4(){
-  const d = state.data;
-  const body = el("div",{},[
-    field("銀行名", inputText("例）三井住友銀行", d.bankName, v=>d.bankName=v)),
-    field("支店名", inputText("例）鹿児島支店", d.branchName, v=>d.branchName=v)),
-    field("口座種別", selectBox(d.accountType, v=>d.accountType=v, ["普通","当座"])),
-    field("口座番号", inputText("例）1234567", d.accountNumber, v=>d.accountNumber=v, {inputmode:"numeric"})),
-    field("口座名義（カナ）", inputText("例）ヤマダ タロウ", d.accountNameKana, v=>d.accountNameKana=v))
-  ]);
-
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
-
-  return stepCard("BANK","green","口座情報",
-    "報酬の振込先口座を入力してください。",
-    [body],
-    buttons
-  );
-}
-
-/* STEP5 */
-function renderStep5(){
-  const d = state.data;
-
-  const inputFront = el("input",{type:"file", accept:"image/*", class:"input", onchange: async (e)=>{
-    const f = e.target.files?.[0];
-    if(!f) return;
-    d.licenseFront = await fileToDataURL(f);
-    render();
-  }});
-
-  const inputBack = el("input",{type:"file", accept:"image/*", class:"input", onchange: async (e)=>{
-    const f = e.target.files?.[0];
-    if(!f) return;
-    d.licenseBack = await fileToDataURL(f);
-    render();
-  }});
-
-  const grid = el("div",{class:"imageGrid"},[
-    el("div",{class:"preview"},[
-      el("div",{class:"label", style:"padding:12px 12px 0;"}, "免許証 表面（必須）"),
-      d.licenseFront ? el("img",{src:d.licenseFront, alt:"license front"}) : el("div",{style:"padding:12px;"}, "未選択"),
-      el("div",{style:"padding:10px 12px 14px;"}, [inputFront])
-    ]),
-    el("div",{class:"preview"},[
-      el("div",{class:"label", style:"padding:12px 12px 0;"}, "免許証 裏面（任意）"),
-      d.licenseBack ? el("img",{src:d.licenseBack, alt:"license back"}) : el("div",{style:"padding:12px;"}, "未選択"),
-      el("div",{style:"padding:10px 12px 14px;"}, [inputBack])
-    ])
-  ]);
-
-  const body = el("div",{},[
-    el("div",{class:"notice"},
-      "※写真は縦長でもOK。PDFでは免許証が見えるように上下の余白をカットして出力します（縮小で読めない問題を防止）。"
-    ),
-    grid
-  ]);
-
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
-
-  return stepCard("IMAGES","", "提出画像",
-    "免許証画像をアップしてください。",
-    [body],
-    buttons
-  );
-}
-
-/* STEP6 確認 */
-function lineRow(label, value){
-  return el("div",{class:"field"},[
-    el("div",{class:"label"}, label),
-    el("div",{class:"notice"}, value || "—")
-  ]);
-}
-function renderStep6(){
-  const d = state.data;
-  const body = el("div",{},[
-    el("div",{class:"notice"}, "内容を確認し、問題なければ「次へ」へ進んでください。"),
-    lineRow("氏名（漢字）", d.nameKanji),
-    lineRow("フリガナ", d.nameKana),
-    lineRow("電話番号", d.phone),
-    lineRow("メールアドレス", d.email || "—"),
-    lineRow("生年月日", d.birthday || "—"),
-    lineRow("郵便番号", d.zip || "—"),
-    lineRow("住所", d.address),
-    lineRow("所属区分", d.affiliation),
-    lineRow("所属会社名", d.affiliationCompany || "—"),
-    lineRow("車種", d.vehicleType),
-    lineRow("車両ナンバー", d.plate || "—"),
-    lineRow("黒ナンバー", d.blackPlate),
-    lineRow("銀行名", d.bankName),
-    lineRow("支店名", d.branchName),
-    lineRow("口座種別", d.accountType),
-    lineRow("口座番号", d.accountNumber),
-    lineRow("口座名義（カナ）", d.accountNameKana),
-    el("div",{class:"notice"},
-      "提出画像：免許証（表/裏）"
-    )
-  ]);
-
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
-
-  return stepCard("CONFIRM","green","入力内容の確認",
-    "入力内容を最終確認してください。",
-    [body],
-    buttons
-  );
-}
-
-/* STEP7 規約 */
-function renderStep7(){
-  const terms = [
-    "内容を確認し、同意して次へ進んでください。",
+  const terms = document.createElement("div");
+  terms.className = "termsBox";
+  const ul = document.createElement("ul");
+  [
     "本登録はドライバー本人が行うものとします。",
     "入力内容および提出書類は正確な情報であることを保証してください。",
     "虚申告・不正が判明した場合、登録・契約をお断りする場合があります。",
     "取得した個人情報は、業務連絡・案件調整・法令対応の目的で利用します。",
     "登録後、OFA GROUP担当者より連絡を行い案件を決定します。"
-  ];
+  ].forEach(t=>{
+    const li = document.createElement("li");
+    li.textContent = t;
+    ul.appendChild(li);
+  });
+  terms.appendChild(ul);
+  wrap.appendChild(terms);
 
-  const body = el("div",{},[
-    el("div",{class:"notice"},
-      el("ul",{style:"margin:0;padding-left:18px;line-height:1.8;"},
-        terms.map(t=>el("li",{},t))
-      )
-    ),
-    el("div",{class:"checkRow"},[
-      el("input",{type:"checkbox", checked: state.agree ? "checked" : null, onchange:(e)=>{state.agree=e.target.checked;}}),
-      el("div",{},[
-        el("div",{style:"font-weight:900;"},"上記に同意します"),
-        el("div",{class:"hint"},"※同意後「次へ」で完了画面へ進みます。")
-      ])
-    ])
-  ]);
+  const check = document.createElement("div");
+  check.className = "checkRow";
 
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("次へ","primary", goNext)
-  ]);
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.checked = !!state.data.agreed;
+  cb.addEventListener("change", ()=> state.data.agreed = cb.checked);
 
-  return stepCard("TERMS","", "登録規約",
-    "同意がないと登録完了できません。",
-    [body],
-    buttons
-  );
+  const text = document.createElement("div");
+  text.innerHTML = "<b>上記に同意します</b>";
+
+  check.appendChild(cb);
+  check.appendChild(text);
+
+  wrap.appendChild(check);
+
+  return wrap;
 }
 
-/* STEP8 完了 */
-function renderStep8(){
-  const body = el("div",{},[
-    el("div",{class:"notice"},
-      el("div",{}, "① まず OFAメンバーシップLINE を追加（開く）"),
-      el("div",{}, "② 次に 登録PDF を作成"),
-      el("div",{}, "③ PDFをLINEへ送信してください")
-    ),
-    el("div",{class:"btnRow3"},[
-      btn("メンバーシップLINE\nを開く","green", ()=>openMembershipLINE()),
-      btn("登録PDFを作成","primary", ()=>createPDF()),
-      btn("PDFを共有","secondary", ()=>sharePDF())
-    ]),
-    el("div",{class:"hint", style:"margin-top:10px;line-height:1.6;"},
-      "※LINE未追加だと共有先に表示されない場合があります。先にLINE追加 → その後PDF作成 の順番でお願いします。"
-    )
-  ]);
+/* ============ Step 8 ============ */
+function step8(){
+  const wrap = document.createElement("div");
+  wrap.className = "formGrid";
 
-  const buttons = el("div",{class:"btnRow"},[
-    btn("戻る","secondary", goBack),
-    btn("最初から","primary", ()=>{state.step=1; render();})
-  ]);
+  const p = document.createElement("div");
+  p.className = "termsBox";
+  p.innerHTML = `
+    <ul>
+      <li><b>まず</b> OFAメンバーシップLINE を追加（開く）</li>
+      <li><b>次に</b> 登録PDFを作成</li>
+      <li><b>PDFを</b> LINEへ送信してください</li>
+    </ul>
+  `;
+  wrap.appendChild(p);
 
-  return stepCard("DONE","green","登録完了",
-    "登録PDFを作成し、OFAメンバーシップLINEへ送信してください。",
-    [body],
-    buttons
-  );
-}
+  // 横3ボタン
+  const row = document.createElement("div");
+  row.className = "nav";
+  row.style.marginTop = "12px";
 
-/* ---------- LINE ---------- */
-function openMembershipLINE(){
-  // LINE内ブラウザ等の対策：window.openはブロックされやすいので location遷移
-  try{
+  const btnLine = document.createElement("button");
+  btnLine.type = "button";
+  btnLine.className = "btn btnGreen";
+  btnLine.textContent = "メンバーシップLINEを開く";
+
+  const btnPdf = document.createElement("button");
+  btnPdf.type = "button";
+  btnPdf.className = "btn btnPrimary";
+  btnPdf.textContent = "登録PDFを作成";
+
+  row.appendChild(btnLine);
+  row.appendChild(btnPdf);
+
+  wrap.appendChild(row);
+
+  const btnShare = document.createElement("button");
+  btnShare.type = "button";
+  btnShare.className = "btn btnWhite";
+  btnShare.textContent = "PDFを共有";
+  wrap.appendChild(btnShare);
+
+  const note = document.createElement("div");
+  note.className = "help";
+  note.textContent = "※LINE未追加だと共有先に表示されない場合があります。先にLINE追加 → その後PDF作成 の順番でお願いします。";
+  wrap.appendChild(note);
+
+  bindTap(btnLine, ()=>{
+    // LINE内ブラウザでも開けるように
     window.location.href = OFA_MEMBERSHIP_LINE_URL;
-  }catch(e){
-    toast("LINEを開けませんでした。URLを確認してください。");
-  }
-}
-
-/* ---------- PDF (Japanese) ---------- */
-let lastPdfBlob = null;
-
-async function ensureJapaneseFont(){
-  if(state.assets.jpFontReady) return true;
-
-  try{
-    // フォントを同一オリジンから取得（GitHub Pagesに置く）
-    const res = await fetch("./assets/NotoSansJP-Regular.ttf");
-    if(!res.ok) throw new Error("font fetch failed");
-    const buf = await res.arrayBuffer();
-    const b64 = arrayBufferToBase64(buf);
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF(); // ここでapi存在チェック
-
-    // jsPDF VFSへ登録
-    doc.addFileToVFS("NotoSansJP-Regular.ttf", b64);
-    doc.addFont("NotoSansJP-Regular.ttf", state.assets.jpFontName, "normal");
-
-    state.assets.jpFontReady = true;
-    return true;
-  }catch(e){
-    console.error(e);
-    toast("日本語フォントが読めません（assets/NotoSansJP-Regular.ttf を配置してください）");
-    return false;
-  }
-}
-
-function arrayBufferToBase64(buffer){
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  const chunk = 0x8000;
-  for(let i=0; i<bytes.length; i+=chunk){
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
-  }
-  return btoa(binary);
-}
-
-async function createPDF(){
-  const ok = await ensureJapaneseFont();
-  if(!ok) return;
-
-  toast("PDF作成中…");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:"p", unit:"mm", format:"a4"});
-  doc.setFont(state.assets.jpFontName, "normal");
-
-  const d = state.data;
-
-  // レイアウト
-  const pageW = 210, pageH = 297;
-  const margin = 10;
-
-  // header
-  doc.setFontSize(14);
-  doc.text("OFA GROUP ドライバー登録シート", margin, 16);
-
-  doc.setFontSize(9);
-  const now = new Date();
-  const stamp = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-  doc.text(`作成日時：${stamp}`, pageW - margin - 55, 16);
-  doc.setTextColor(255,122,0);
-  doc.text("One for All, All for One", pageW - margin - 55, 22);
-  doc.setTextColor(0,0,0);
-
-  // orange line
-  doc.setDrawColor(255,122,0);
-  doc.setLineWidth(0.8);
-  doc.line(margin, 26, pageW - margin, 26);
-
-  // cards
-  const leftX = margin;
-  const rightX = pageW/2 + 2;
-  const colW = pageW/2 - margin - 2;
-  let y = 32;
-
-  const left = [
-    ["氏名（漢字）", d.nameKanji],
-    ["電話番号", d.phone],
-    ["生年月日", d.birthday || "—"],
-    ["所属区分", d.affiliation],
-    ["車種", d.vehicleType],
-    ["黒ナンバー", d.blackPlate],
-    ["口座種別", d.accountType],
-    ["口座名義（カナ）", d.accountNameKana]
-  ];
-  const right = [
-    ["フリガナ", d.nameKana],
-    ["メール", d.email || "—"],
-    ["郵便番号", d.zip || "—"],
-    ["住所", d.address || "—"],
-    ["所属会社名（任意）", d.affiliationCompany || "—"],
-    ["車両ナンバー", d.plate || "—"],
-    ["銀行", d.bankName],
-    ["支店", d.branchName],
-    ["口座番号", d.accountNumber]
-  ];
-
-  y = drawCardTable(doc, leftX, y, colW, left, 8);
-  const y2 = drawCardTable(doc, rightX, 32, colW, right, 8);
-  y = Math.max(y, y2) + 6;
-
-  // images title
-  doc.setFontSize(11);
-  doc.text("提出画像", margin, y + 6);
-  y += 10;
-
-  // images area
-  const imgW = (pageW - margin*2 - 6) / 2;
-  const imgH = 58;
-
-  // 前面（必須）
-  if(d.licenseFront){
-    const img1 = await dataUrlToImage(d.licenseFront);
-    const cropped1 = coverCropToDataURL(img1, imgW, imgH); // 縦長→上下カットで免許証見える
-    doc.roundedRect(margin, y, imgW, imgH, 3, 3, "S");
-    doc.addImage(cropped1, "JPEG", margin, y, imgW, imgH);
-    doc.setFontSize(9);
-    doc.text("免許証 表面（必須）", margin, y - 2);
-  }else{
-    doc.setFontSize(9);
-    doc.text("免許証 表面（必須）未提出", margin, y + 8);
-  }
-
-  // 裏面（任意）
-  if(d.licenseBack){
-    const img2 = await dataUrlToImage(d.licenseBack);
-    const cropped2 = coverCropToDataURL(img2, imgW, imgH);
-    doc.roundedRect(margin + imgW + 6, y, imgW, imgH, 3, 3, "S");
-    doc.addImage(cropped2, "JPEG", margin + imgW + 6, y, imgW, imgH);
-    doc.setFontSize(9);
-    doc.text("免許証 裏面（任意）", margin + imgW + 6, y - 2);
-  }else{
-    doc.setFontSize(9);
-    doc.text("免許証 裏面（任意）未提出", margin + imgW + 6, y + 8);
-  }
-
-  // footer note
-  doc.setFontSize(10);
-  doc.setTextColor(60);
-  doc.text("このPDFを「OFAメンバーシップLINE」へ添付して送信してください。", margin, pageH - 14);
-  doc.setTextColor(0);
-
-  // 保存用Blob
-  const blob = doc.output("blob");
-  lastPdfBlob = blob;
-
-  // 端末によってはダウンロードが確実
-  const filename = `OFA_driver_entry_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}_${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}.pdf`;
-  doc.save(filename);
-
-  toast("PDFを作成しました");
-}
-
-function drawCardTable(doc, x, y, w, rows, fontSize){
-  const rowH = 12;
-  const pad = 3;
-  doc.setFontSize(fontSize);
-
-  rows.forEach(([k,v])=>{
-    // box
-    doc.setDrawColor(220);
-    doc.roundedRect(x, y, w, rowH, 2.5, 2.5, "S");
-
-    // left orange accent
-    doc.setDrawColor(255,122,0);
-    doc.setLineWidth(1);
-    doc.line(x+1.5, y+2, x+1.5, y+rowH-2);
-    doc.setLineWidth(0.2);
-    doc.setDrawColor(220);
-
-    // text
-    doc.setTextColor(90);
-    doc.text(String(k), x+pad+3, y+4.8);
-    doc.setTextColor(0);
-
-    const val = String(v ?? "—");
-    doc.setFontSize(fontSize+1);
-    doc.text(truncateText(doc, val, w-10), x+pad+3, y+9.7);
-    doc.setFontSize(fontSize);
-
-    y += rowH + 2.5;
   });
 
-  return y;
-}
-
-function truncateText(doc, text, maxW){
-  // jsPDFで幅を見ながら切る
-  let t = text;
-  while(doc.getTextWidth(t) > maxW && t.length > 3){
-    t = t.slice(0, -2);
-  }
-  if(t !== text) t += "…";
-  return t;
-}
-
-function dataUrlToImage(dataUrl){
-  return new Promise((resolve,reject)=>{
-    const img = new Image();
-    img.onload = ()=>resolve(img);
-    img.onerror = reject;
-    img.src = dataUrl;
-  });
-}
-
-/* 画像を“縮小せず”見やすく：coverで上下をカット（免許証が読める） */
-function coverCropToDataURL(img, targetWmm, targetHmm){
-  // mm→px 変換（適当な解像度）
-  const scale = 6; // 1mm = 6px 程度
-  const targetW = Math.round(targetWmm*scale);
-  const targetH = Math.round(targetHmm*scale);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = targetW;
-  canvas.height = targetH;
-  const ctx = canvas.getContext("2d");
-
-  const iw = img.naturalWidth;
-  const ih = img.naturalHeight;
-
-  // cover
-  const r = Math.max(targetW/iw, targetH/ih);
-  const nw = iw*r;
-  const nh = ih*r;
-  const dx = (targetW - nw)/2;
-  const dy = (targetH - nh)/2;
-
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0,0,targetW,targetH);
-  ctx.drawImage(img, dx, dy, nw, nh);
-
-  return canvas.toDataURL("image/jpeg", 0.92);
-}
-
-async function sharePDF(){
-  if(!lastPdfBlob){
-    toast("先に「登録PDFを作成」してください");
-    return;
-  }
-
-  const file = new File([lastPdfBlob], "OFA_driver_entry.pdf", {type:"application/pdf"});
-
-  // Web Share API（Android/一部ブラウザで強い）
-  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+  bindTap(btnPdf, async ()=>{
     try{
-      await navigator.share({
-        title:"OFA Driver Entry",
-        text:"登録PDFを送信します",
-        files:[file]
-      });
-      toast("共有しました");
-      return;
+      toast("PDF作成中…");
+      await generatePdf();
+      toast("PDFを作成しました");
     }catch(e){
-      // ユーザーキャンセル等
-      console.warn(e);
+      console.error(e);
+      toast(e?.message || "PDF作成に失敗しました");
     }
-  }
+  });
 
-  // フォールバック：新しいタブで開く
-  try{
-    const url = URL.createObjectURL(lastPdfBlob);
-    window.open(url, "_blank");
-    toast("PDFを開きました（共有からLINEへ送信できます）");
-  }catch(e){
-    toast("共有できませんでした。PDFを作成し、ファイルからLINEへ送ってください。");
-  }
+  bindTap(btnShare, async ()=>{
+    try{
+      if(!state.pdfBlob){
+        toast("先に「登録PDFを作成」を押してください");
+        return;
+      }
+      await sharePdf();
+    }catch(e){
+      console.error(e);
+      toast(e?.message || "共有に失敗しました");
+    }
+  });
+
+  return wrap;
 }
 
-/* ---------- file -> dataURL ---------- */
-function fileToDataURL(file){
-  return new Promise((resolve,reject)=>{
+/* ============ Fields ============ */
+function fieldText(label, placeholder, value, onInput, required=false, type="text"){
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+
+  const l = document.createElement("label");
+  l.textContent = required ? `${label}（必須）` : label;
+
+  const input = document.createElement("input");
+  input.className = "input";
+  input.type = type;
+  input.placeholder = placeholder;
+  input.value = value || "";
+  input.autocomplete = "off";
+  input.inputMode = (type==="tel") ? "tel" : undefined;
+
+  input.addEventListener("input", ()=> onInput(input.value));
+
+  wrap.appendChild(l);
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function fieldTextarea(label, placeholder, value, onInput, required=false){
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+
+  const l = document.createElement("label");
+  l.textContent = required ? `${label}（必須）` : label;
+
+  const ta = document.createElement("textarea");
+  ta.className = "textarea";
+  ta.placeholder = placeholder;
+  ta.value = value || "";
+  ta.addEventListener("input", ()=> onInput(ta.value));
+
+  wrap.appendChild(l);
+  wrap.appendChild(ta);
+  return wrap;
+}
+
+function fieldSelect(label, options, value, onChange, required=false){
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+
+  const l = document.createElement("label");
+  l.textContent = required ? `${label}（必須）` : label;
+
+  const sel = document.createElement("select");
+  sel.className = "select";
+
+  options.forEach(opt=>{
+    const o = document.createElement("option");
+    o.value = (opt === "選択してください") ? "" : opt;
+    o.textContent = opt;
+    sel.appendChild(o);
+  });
+  sel.value = value || "";
+  sel.addEventListener("change", ()=> onChange(sel.value));
+
+  wrap.appendChild(l);
+  wrap.appendChild(sel);
+  return wrap;
+}
+
+function fileUploader(title, required, onPicked, previewUrl){
+  const box = document.createElement("div");
+  box.className = "fileBox";
+
+  const row = document.createElement("div");
+  row.className = "fileRow";
+
+  const left = document.createElement("div");
+  left.className = "label";
+  left.textContent = required ? `${title}` : `${title}`;
+
+  const right = document.createElement("div");
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.capture = "environment";
+
+  input.addEventListener("change", async ()=>{
+    const file = input.files?.[0];
+    if(!file) return;
+    const url = await readFileAsDataUrl(file);
+    onPicked(file, url);
+    render();
+  });
+
+  right.appendChild(input);
+  row.appendChild(left);
+  row.appendChild(right);
+
+  box.appendChild(row);
+
+  if(previewUrl){
+    const prev = document.createElement("div");
+    prev.className = "preview";
+    const img = document.createElement("img");
+    img.src = previewUrl;
+    prev.appendChild(img);
+    box.appendChild(prev);
+
+    const help = document.createElement("div");
+    help.className = "help";
+    help.textContent = "※PDFでは免許証が見えるように上下を自動トリミングして出力します（縮小しません）";
+    box.appendChild(help);
+  }
+
+  return box;
+}
+
+function readFileAsDataUrl(file){
+  return new Promise((resolve, reject)=>{
     const r = new FileReader();
-    r.onload = ()=>resolve(r.result);
+    r.onload = ()=> resolve(r.result);
     r.onerror = reject;
     r.readAsDataURL(file);
   });
 }
 
-/* ---------- main render ---------- */
-function render(){
-  const app = $("#app");
-  app.innerHTML = "";
+/* ============ Validation ============ */
+function validateStep(step){
+  const d = state.data;
 
-  let content;
-  if(state.step===1) content = renderStep1();
-  if(state.step===2) content = renderStep2();
-  if(state.step===3) content = renderStep3();
-  if(state.step===4) content = renderStep4();
-  if(state.step===5) content = renderStep5();
-  if(state.step===6) content = renderStep6();
-  if(state.step===7) content = renderStep7();
-  if(state.step===8) content = renderStep8();
+  const req = (cond, msg) => {
+    if(!cond){
+      toast(msg);
+      return false;
+    }
+    return true;
+  };
 
-  app.appendChild(renderShell(content));
-
-  // Safari/Chromeで「押せない」対策：スクロールとクリック干渉を減らす
-  document.body.style.webkitTouchCallout = "none";
+  if(step===1){
+    if(!req(d.nameKanji.trim().length>0, "氏名（漢字）を入力してください")) return false;
+    if(!req(d.nameKana.trim().length>0, "フリガナを入力してください")) return false;
+    if(!req(normalizePhone(d.phone).length>=10, "電話番号を正しく入力してください")) return false;
+    if(!req(d.birth.trim().length>0, "生年月日を入力してください（例：1991/07/31）")) return false;
+  }
+  if(step===2){
+    if(!req(d.address.trim().length>0, "住所を入力してください")) return false;
+  }
+  if(step===3){
+    if(!req(d.affiliationType.trim().length>0, "所属区分を選択してください")) return false;
+  }
+  if(step===4){
+    if(!req(d.carType.trim().length>0, "車種を選択してください")) return false;
+    if(!req(d.blackPlate.trim().length>0, "黒ナンバーを選択してください")) return false;
+  }
+  if(step===5){
+    if(!req(d.bankName.trim().length>0, "銀行名を入力してください")) return false;
+    if(!req(d.accountType.trim().length>0, "口座種別を選択してください")) return false;
+    if(!req(d.accountNumber.trim().length>=5, "口座番号を入力してください")) return false;
+    if(!req(d.accountNameKana.trim().length>0, "口座名義（カナ）を入力してください")) return false;
+  }
+  if(step===6){
+    if(!req(!!d.licenseFrontDataUrl, "免許証 表面（必須）をアップロードしてください")) return false;
+  }
+  if(step===7){
+    if(!req(!!d.agreed, "同意にチェックしてください")) return false;
+  }
+  return true;
 }
 
-window.addEventListener("load", ()=>{
-  // ロゴが無い/404でもUI止めない
+function normalizePhone(s){
+  return (s||"").replace(/[^\d]/g,"");
+}
+
+/* ============ PDF ============ */
+async function generatePdf(){
+  // 文字化け防止：フォント必須
+  const fontUrl = "./assets/NotoSansJP-Regular.ttf";
+
+  const { jsPDF } = window.jspdf;
+  if(!jsPDF) throw new Error("jsPDF が読み込めませんでした（ネット環境を確認してください）");
+
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+
+  // フォントを読み込んで埋め込み
+  const fontBytes = await fetchBinary(fontUrl).catch(()=> null);
+  if(!fontBytes){
+    throw new Error("日本語フォントが見つかりません（assets/NotoSansJP-Regular.ttf を配置してください）");
+  }
+  doc.addFileToVFS("NotoSansJP-Regular.ttf", fontBytes);
+  doc.addFont("NotoSansJP-Regular.ttf", "NotoSansJP", "normal");
+  doc.setFont("NotoSansJP", "normal");
+
+  const d = state.data;
+
+  // Header
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 36;
+
+  doc.setFontSize(14);
+  doc.text("OFA GROUP ドライバー登録シート", margin, 44);
+
+  doc.setFontSize(9);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,"0");
+  const da = String(now.getDate()).padStart(2,"0");
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  const stamp = `${y}/${m}/${da} ${hh}:${mm}`;
+
+  doc.text(`作成日時：${stamp}`, pageW - margin - 160, 44);
+  doc.setTextColor(255,106,0);
+  doc.text("One for All, All for One", pageW - margin - 175, 58);
+  doc.setTextColor(17,24,39);
+
+  // Orange line
+  doc.setDrawColor(255,106,0);
+  doc.setLineWidth(2);
+  doc.line(margin, 64, pageW - margin, 64);
+
+  // Boxes helper
+  const boxW = (pageW - margin*2 - 12)/2;
+  const boxH = 44;
+
+  let cursorY = 80;
+
+  const addBox = (x, y, label, val)=>{
+    doc.setDrawColor(230,230,230);
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(x, y, boxW, boxH, 10, 10, "FD");
+
+    // left orange bar
+    doc.setFillColor(255,106,0);
+    doc.roundedRect(x+8, y+8, 4, boxH-16, 3, 3, "F");
+
+    doc.setFontSize(8);
+    doc.setTextColor(107,114,128);
+    doc.text(label, x+18, y+18);
+
+    doc.setFontSize(11);
+    doc.setTextColor(17,24,39);
+    const safe = (val && String(val).trim().length>0) ? String(val) : "";
+    doc.text(safe, x+18, y+36, { maxWidth: boxW-30 });
+  };
+
+  // row 1
+  addBox(margin, cursorY, "氏名（漢字）", d.nameKanji);
+  addBox(margin + boxW + 12, cursorY, "フリガナ", d.nameKana);
+  cursorY += boxH + 10;
+
+  // row 2
+  addBox(margin, cursorY, "電話番号", "+" + normalizePhone(d.phone));
+  addBox(margin + boxW + 12, cursorY, "メール", d.email || "");
+  cursorY += boxH + 10;
+
+  // row 3
+  addBox(margin, cursorY, "生年月日", d.birth);
+  addBox(margin + boxW + 12, cursorY, "住所", d.address);
+  cursorY += boxH + 10;
+
+  // row 4
+  addBox(margin, cursorY, "所属区分", d.affiliationType);
+  addBox(margin + boxW + 12, cursorY, "所属会社名（任意）", d.affiliationCompany || "");
+  cursorY += boxH + 10;
+
+  // row 5
+  addBox(margin, cursorY, "車種", d.carType);
+  addBox(margin + boxW + 12, cursorY, "黒ナンバー", d.blackPlate);
+  cursorY += boxH + 10;
+
+  // row 6
+  addBox(margin, cursorY, "車両ナンバー（任意）", d.carNumber || "");
+  addBox(margin + boxW + 12, cursorY, "銀行", d.bankName);
+  cursorY += boxH + 10;
+
+  // row 7
+  addBox(margin, cursorY, "口座種別", d.accountType);
+  addBox(margin + boxW + 12, cursorY, "口座番号", d.accountNumber);
+  cursorY += boxH + 10;
+
+  // row 8
+  addBox(margin, cursorY, "口座名義（カナ）", d.accountNameKana);
+  cursorY += boxH + 16;
+
+  // Section title
+  doc.setFontSize(11);
+  doc.setTextColor(17,24,39);
+  doc.text("提出画像", margin, cursorY);
+  cursorY += 10;
+
+  // License images
+  const imgBoxW = (pageW - margin*2 - 12)/2;
+  const imgBoxH = 190;
+
+  doc.setDrawColor(230,230,230);
+  doc.setFillColor(255,255,255);
+  doc.roundedRect(margin, cursorY, imgBoxW, imgBoxH, 12, 12, "FD");
+  doc.roundedRect(margin + imgBoxW + 12, cursorY, imgBoxW, imgBoxH, 12, 12, "FD");
+
+  doc.setFontSize(9);
+  doc.setTextColor(107,114,128);
+  doc.text("免許証 表面（必須）", margin+14, cursorY+18);
+  doc.text("免許証 裏面（任意）", margin+imgBoxW+12+14, cursorY+18);
+
+  // ✅縮小しない：上下トリミングで横長枠にフィット
+  const innerPad = 12;
+  const targetX1 = margin + innerPad;
+  const targetY = cursorY + 28;
+  const targetW = imgBoxW - innerPad*2;
+  const targetH = imgBoxH - 40;
+
+  if(d.licenseFrontDataUrl){
+    const cropped1 = await cropToAspect(d.licenseFrontDataUrl, targetW/targetH);
+    doc.addImage(cropped1, "JPEG", targetX1, targetY, targetW, targetH);
+  }
+  if(d.licenseBackDataUrl){
+    const cropped2 = await cropToAspect(d.licenseBackDataUrl, targetW/targetH);
+    doc.addImage(cropped2, "JPEG", margin + imgBoxW + 12 + innerPad, targetY, targetW, targetH);
+  }
+
+  cursorY += imgBoxH + 16;
+
+  // Footer note
+  doc.setFontSize(9);
+  doc.setTextColor(55,65,81);
+  doc.text("このPDFを『OFAメンバーシップLINE』へ添付して送信してください。", margin, pageH - 46);
+
+  // Save blob
+  const fileName = `OFA_driver_entry_${y}${m}${da}_${hh}${mm}.pdf`;
+  const blob = doc.output("blob");
+  state.pdfBlob = blob;
+  state.pdfFileName = fileName;
+
+  // 端末によっては保存が必要
+  // iOSは新規タブ表示が安全
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+}
+
+/* fetch binary and return base64 string for addFileToVFS */
+async function fetchBinary(url){
+  const res = await fetch(url, { cache:"no-store" });
+  if(!res.ok) return null;
+  const buf = await res.arrayBuffer();
+  // base64
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  const chunkSize = 0x8000;
+  for(let i=0;i<bytes.length;i+=chunkSize){
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunkSize));
+  }
+  return btoa(binary);
+}
+
+/* Crop image (center) to target aspect ratio and return JPEG dataURL */
+async function cropToAspect(dataUrl, aspect){
+  const img = await loadImage(dataUrl);
+  const iw = img.naturalWidth;
+  const ih = img.naturalHeight;
+
+  // desired crop size (center)
+  let cw = iw;
+  let ch = Math.round(iw / aspect);
+  if(ch > ih){
+    ch = ih;
+    cw = Math.round(ih * aspect);
+  }
+  const sx = Math.max(0, Math.round((iw - cw)/2));
+  const sy = Math.max(0, Math.round((ih - ch)/2));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
+function loadImage(src){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=> resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+/* Share PDF */
+async function sharePdf(){
+  const blob = state.pdfBlob;
+  const file = new File([blob], state.pdfFileName, { type:"application/pdf" });
+
+  // Web Share API
+  if(navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
+    await navigator.share({
+      title: "OFA 登録PDF",
+      text: "登録PDFを送信します。",
+      files: [file]
+    });
+    toast("共有しました");
+    return;
+  }
+
+  // fallback: download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = state.pdfFileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast("ダウンロードしました（共有できない端末は保存→LINE添付してください）");
+}
+
+/* ============ Init ============ */
+function init(){
+  // dots
+  const dots = $("progressDots");
+  dots.innerHTML = "";
+  for(let i=1;i<=8;i++){
+    const s = document.createElement("span");
+    dots.appendChild(s);
+  }
+
+  // 初期レンダリング
   render();
-});
+}
+
+document.addEventListener("DOMContentLoaded", init);
