@@ -1,8 +1,20 @@
 {
-  "name": "OFA Driver Entry",
+  "name": "OFA GROUP Driver Registration App",
   "short_name": "OFA Entry",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ff7a18"
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "./assets/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
