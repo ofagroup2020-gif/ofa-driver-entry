@@ -3,72 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
   <title>OFA GROUP Driver Registration App</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app"></div>
 
   <!-- jsPDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-</head>
-<body>
-  <div class="bg"></div>
 
-  <div class="wrap">
-    <!-- Top Bar -->
-    <header class="topBar">
-      <div class="brand">
-        <div class="logoBox" aria-label="OFA logo">
-          <!-- OFAロゴ（無い場合でも文字が出る） -->
-          <img id="ofaLogo" alt="OFA" />
-          <div class="logoFallback">OFA</div>
-        </div>
-        <div class="brandText">
-          <div class="brandTitle">OFA GROUP</div>
-          <div class="brandSub">Driver Registration App</div>
-        </div>
-      </div>
-
-      <div class="stepPill">
-        <span class="dot"></span>
-        <span id="stepText">STEP 1 / 8</span>
-      </div>
-    </header>
-
-    <!-- Progress -->
-    <div class="progressWrap">
-      <div class="progressBar">
-        <div class="progressFill" id="progressFill"></div>
-      </div>
-      <div class="progressDots" id="progressDots"></div>
-    </div>
-
-    <!-- Card -->
-    <main class="card">
-      <!-- Step Label -->
-      <div class="chipRow">
-        <div class="chip" id="chipLabel">PROFILE</div>
-      </div>
-
-      <!-- Step Title -->
-      <h1 id="stepTitle">ドライバー基本情報</h1>
-      <p class="desc" id="stepDesc">本登録はドライバーご本人が行ってください。</p>
-
-      <!-- Step Content -->
-      <section id="stepBody"></section>
-
-      <!-- Footer Buttons -->
-      <div class="footerBtns" id="footerBtns">
-        <button class="btn btnGhost" id="btnBack" type="button">戻る</button>
-        <button class="btn btnPrimary" id="btnNext" type="button">次へ</button>
-      </div>
-    </main>
-
-    <footer class="footer">
-      <div>© OFA GROUP</div>
-      <div>One for All, All for One</div>
-    </footer>
-  </div>
-
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
