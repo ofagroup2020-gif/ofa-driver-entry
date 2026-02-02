@@ -1,53 +1,330 @@
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  margin: 0;
-  background: #fafafa;
+:root{
+  --bg1:#f7d7d7;
+  --bg2:#d7f2e6;
+  --bg3:#d8e0ff;
+  --card:#ffffffcc;
+  --text:#111;
+  --muted:#666;
+  --shadow: 0 18px 50px rgba(0,0,0,.10);
+  --radius:24px;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,Arial,sans-serif;
+  color:var(--text);
+  background: radial-gradient(1200px 800px at 20% 10%, var(--bg1), transparent 60%),
+              radial-gradient(1200px 800px at 10% 90%, var(--bg2), transparent 60%),
+              radial-gradient(1200px 800px at 95% 35%, var(--bg3), transparent 60%),
+              #fff;
 }
 
-.logo {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.app{
+  min-height:100%;
+  padding:18px 14px 16px;
+  max-width:420px;
+  margin:0 auto;
 }
 
-.step {
-  display: none;
-  padding: 16px;
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(255,255,255,.45);
+  backdrop-filter: blur(16px);
+  border-radius:18px;
+  padding:12px 12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
 
-.step.active {
-  display: block;
+.brand{display:flex; align-items:center; gap:10px}
+.logo{
+  width:46px; height:46px;
+  border-radius:14px;
+  background:#fff;
+  object-fit:contain;
+  box-shadow:0 6px 18px rgba(0,0,0,.10);
+}
+.brandText{line-height:1.1}
+.brandTitle{font-weight:800; letter-spacing:.06em}
+.brandSub{font-size:12px; color:#333; opacity:.8}
+
+.stepBadge{
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.65);
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:700;
+}
+.dot{width:10px;height:10px;border-radius:50%;background:#ff3b30}
+
+.progressWrap{margin:12px 0 14px}
+.progressBar{
+  height:12px; border-radius:999px;
+  background:rgba(255,255,255,.60);
+  overflow:hidden;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.progressFill{
+  height:100%;
+  width:12%;
+  border-radius:999px;
+  background: linear-gradient(90deg,#ff9500,#ff2d55,#5856d6,#34c759);
+  transition: width .25s ease;
+}
+.progressDots{
+  display:flex; justify-content:center; gap:8px;
+  margin-top:10px;
+}
+.progressDots .dot2{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(0,0,0,.12);
+}
+.progressDots .dot2.active{
+  background: linear-gradient(90deg,#ff9500,#ff2d55,#5856d6,#34c759);
 }
 
-label {
-  display: block;
-  margin-bottom: 12px;
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px 16px;
+  box-shadow:var(--shadow);
+  backdrop-filter: blur(18px);
 }
 
-input, select {
-  width: 100%;
-  padding: 8px;
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  background:#fff;
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:800;
+  letter-spacing:.08em;
+  font-size:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+.pillAccent{width:10px;height:18px;border-radius:999px}
+.pillAccent.orange{background:linear-gradient(180deg,#ff9500,#ff2d55)}
+.pillAccent.blue{background:linear-gradient(180deg,#0a84ff,#5e5ce6)}
+.pillAccent.green{background:linear-gradient(180deg,#34c759,#00c7be)}
+.pillAccent.purple{background:linear-gradient(180deg,#af52de,#5856d6)}
+
+h1{margin:12px 0 8px; font-size:28px; letter-spacing:.02em}
+.muted{color:var(--muted); margin:0 0 12px}
+.muted.small{font-size:12px; line-height:1.5}
+
+.field{display:block; margin:12px 0}
+.fieldLabel{font-weight:800; margin-bottom:8px}
+.req{margin-left:6px; font-size:12px; font-weight:900; color:#ff3b30}
+.opt{margin-left:6px; font-size:12px; font-weight:900; color:#777}
+.hint{font-size:12px; color:#777; margin-top:6px}
+
+input,select,textarea{
+  width:100%;
+  border:0;
+  outline:0;
+  padding:14px 14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.85);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  font-size:16px;
+}
+textarea{resize:vertical}
+
+.nav{
+  display:flex;
+  gap:12px;
+  margin-top:16px;
+}
+.btn{
+  width:100%;
+  padding:14px 14px;
+  border-radius:999px;
+  border:0;
+  font-weight:900;
+  font-size:16px;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* iOS/Android 反応改善 */
+}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+
+.btn.ghost{
+  background:rgba(255,255,255,.75);
+  color:#111;
+  box-shadow:0 10px 25px rgba(0,0,0,.10);
+}
+.btn.grad{
+  color:#fff;
+  background:linear-gradient(90deg,#ff9500,#ff2d55,#5856d6);
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+}
+.btn.grad2{
+  color:#fff;
+  background:linear-gradient(90deg,#34c759,#00c7be,#5856d6);
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+}
+.btn.white{
+  background:#fff;
+  color:#0a84ff;
+  box-shadow:0 12px 30px rgba(0,0,0,.10);
 }
 
-button {
-  padding: 12px;
-  width: 100%;
-  margin-top: 8px;
+.uploadGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+@media (max-width:380px){
+  .uploadGrid{grid-template-columns:1fr}
 }
 
-.line {
-  display: block;
-  padding: 14px;
-  background: #06c755;
-  color: #fff;
-  text-align: center;
-  text-decoration: none;
+.uploadCard{
+  background:rgba(255,255,255,.60);
+  border-radius:18px;
+  padding:12px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.uploadTitle{font-weight:900; margin-bottom:8px}
+.previewFrame{
+  margin-top:10px;
+  border-radius:14px;
+  overflow:hidden;
+  background:#f2f2f2;
+  height:140px;
+}
+.previewFrame img{
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center; /* 見やすい */
+  display:block;
+}
+
+.termsBox{
+  background:rgba(255,255,255,.75);
+  border-radius:18px;
+  padding:14px 14px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.termsBox ul{margin:0; padding-left:18px}
+.termsBox li{margin:8px 0; line-height:1.5}
+
+.agree{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:12px;
+  font-weight:900;
+}
+.agree input{width:20px;height:20px}
+
+.doneSteps{
+  background:rgba(255,255,255,.75);
+  border-radius:18px;
+  padding:14px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  line-height:1.7;
+  margin-bottom:14px;
+}
+
+.btnStack{display:grid; gap:12px; margin:12px 0 10px}
+
+.footer{
+  display:flex;
+  justify-content:space-between;
+  margin-top:12px;
+  color:rgba(0,0,0,.35);
+  font-weight:700;
+}
+.footer .motto{letter-spacing:.02em}
+
+/* Toast */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.78);
+  color:#fff;
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:900;
+  z-index:9999;
+}
+
+/* PDF Sheet (offscreen) */
+.pdfSheet{
+  position:fixed;
+  left:-9999px;
+  top:-9999px;
+  width:794px; /* A4 @ 96dpi-ish */
+  background:#fff;
+  color:#111;
+  padding:26px 26px 18px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,Arial,sans-serif;
+}
+.pdfHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  border-bottom:3px solid #ff9500;
+  padding-bottom:10px;
+}
+.pdfTitle{font-size:20px; font-weight:900; letter-spacing:.06em}
+.pdfMeta{font-size:12px; text-align:right}
+.pdfMotto{color:#ff9500; font-weight:900}
+
+.pdfGrid{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.pdfItem{
+  border:1px solid #eee;
+  border-radius:12px;
+  padding:10px 12px;
+}
+.pdfKey{font-size:12px; color:#666; font-weight:900}
+.pdfVal{margin-top:6px; font-size:14px; font-weight:800; word-break:break-word}
+
+.pdfSectionTitle{
+  margin-top:14px;
+  font-weight:900;
+  font-size:14px;
+}
+.pdfImages{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.pdfImgBox{
+  border:1px solid #eee;
+  border-radius:12px;
+  padding:10px;
+}
+.pdfImgLabel{font-size:12px; color:#666; font-weight:900; margin-bottom:8px}
+.pdfImgFrame{
+  width:100%;
+  height:220px;
+  border-radius:10px;
+  overflow:hidden;
+  background:#f2f2f2;
+}
+.pdfImgFrame img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
+.pdfFooter{
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid #eee;
+  font-size:12px;
+  font-weight:900;
+  color:#333;
 }
