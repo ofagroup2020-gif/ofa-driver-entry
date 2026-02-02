@@ -1,382 +1,53 @@
-:root{
-  --bg1:#f7d7cf;
-  --bg2:#d9c9f7;
-  --bg3:#bfeee2;
-
-  --card:#ffffffcc;
-  --stroke:#ffffff80;
-
-  --text:#111827;
-  --muted:#6b7280;
-
-  --shadow: 0 18px 45px rgba(0,0,0,.12);
-
-  --radius: 26px;
-  --radius2: 18px;
-}
-
-/* ✅ これが重要：iOS/Androidで「ボタンが反応しない」原因の透明被り対策 */
-*{ box-sizing:border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  font-family:"Noto Sans JP", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(1200px 800px at 15% 10%, var(--bg1), transparent 60%),
-    radial-gradient(1200px 800px at 90% 15%, var(--bg2), transparent 55%),
-    radial-gradient(1200px 900px at 40% 90%, var(--bg3), transparent 60%),
-    #f6f7fb;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.app{
-  width:min(720px, 100%);
-  margin:0 auto;
-  padding: 18px 16px 24px;
-  position:relative;
-}
-
-/* Header */
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding: 10px 12px;
-  border-radius: 22px;
-  background: rgba(255,255,255,.35);
-  border: 1px solid rgba(255,255,255,.45);
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow);
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
-}
-
-.logoWrap{
-  width:42px;height:42px;
-  border-radius:14px;
-  background:rgba(255,255,255,.55);
-  border:1px solid rgba(255,255,255,.55);
-  display:grid;
-  place-items:center;
-  overflow:hidden;
-  flex:0 0 auto;
-}
-
-.logo{ width:34px;height:34px; object-fit:contain; }
-
-.logoFallback{
-  width:34px;height:34px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:900;
-  color:#ff6a00;
-}
-
-.brandText{ min-width:0; }
-.brandTitle{ font-weight:900; letter-spacing:.06em; }
-.brandSub{ font-size:12px; color:var(--muted); margin-top:2px; }
-
-.stepPill{
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.65);
-  border:1px solid rgba(255,255,255,.7);
-}
-.dot{
-  width:10px;height:10px;border-radius:999px;
-  background:#ff3b30;
-}
-
-/* Progress */
-.progressCard{
-  margin-top: 14px;
-  padding: 14px 14px 10px;
-  border-radius: 22px;
-  background: rgba(255,255,255,.32);
-  border: 1px solid rgba(255,255,255,.45);
-  backdrop-filter: blur(10px);
-}
-
-.progressBar{
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.55);
-  border: 1px solid rgba(255,255,255,.65);
-  overflow:hidden;
-  position:relative;
-}
-
-.progressFill{
-  height:100%;
-  width: 12.5%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #ff7a00, #ff2d55, #7c3aed, #22c55e);
-}
-
-.progressDots{
-  display:flex;
-  gap:10px;
-  justify-content:center;
-  align-items:center;
-  margin-top:10px;
-}
-.progressDots span{
-  width:10px;height:10px;border-radius:999px;
-  background: rgba(0,0,0,.15);
-}
-.progressDots span.active{
-  width:22px;
-  background: linear-gradient(90deg, #ff7a00, #7c3aed);
-}
-
-/* Card */
-.card{
-  margin-top:14px;
-  padding: 18px 16px 16px;
-  border-radius: var(--radius);
-  background: var(--card);
-  border: 1px solid rgba(255,255,255,.65);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-  position:relative;
-  z-index: 1; /* ✅透明被り防止 */
-}
-
-.cardTag{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  padding: 9px 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.75);
-  border: 1px solid rgba(255,255,255,.7);
-}
-
-.tagMark{
-  width:10px;height:22px;border-radius:999px;
-  background: linear-gradient(180deg, #ff7a00, #7c3aed);
-}
-.tagText{
-  font-weight:900;
-  letter-spacing:.14em;
-  font-size:12px;
-}
-
-.cardTitle{
-  margin: 14px 0 6px;
-  font-size: 28px;
-  letter-spacing:.02em;
-}
-.cardDesc{
-  margin: 0 0 12px;
-  color: var(--muted);
-  line-height:1.6;
-}
-
-/* Form */
-.formGrid{
-  display:grid;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.field label{
-  display:block;
-  font-weight:800;
-  margin-bottom:6px;
-}
-.help{
-  display:block;
-  font-size: 12px;
-  color: var(--muted);
-  margin-top:6px;
-}
-
-.input, .select, .textarea{
-  width:100%;
-  padding: 14px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: rgba(255,255,255,.78);
-  outline:none;
-  font-size: 16px;
-}
-
-.textarea{ min-height: 88px; resize: vertical; }
-
-.row2{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-@media (max-width:520px){
-  .row2{ grid-template-columns: 1fr; }
-}
-
-.chips{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-@media (max-width:520px){
-  .chips{ grid-template-columns: 1fr; }
-}
-.chip{
-  border-radius: 16px;
-  padding: 14px 10px;
-  border:1px solid rgba(0,0,0,.10);
-  background: rgba(255,255,255,.78);
-  font-weight:900;
-  cursor:pointer;
-  user-select:none;
-  text-align:center;
-}
-.chip.active{
-  color:white;
-  border: none;
-  background: linear-gradient(90deg, #ff7a00, #7c3aed);
-}
-
-.fileBox{
-  border-radius: 18px;
-  border: 1px dashed rgba(0,0,0,.18);
-  background: rgba(255,255,255,.65);
-  padding: 12px;
-}
-.fileRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.fileRow .label{
-  font-weight:900;
-}
-.preview{
-  margin-top: 10px;
-  border-radius: 16px;
-  overflow:hidden;
-  background: rgba(0,0,0,.06);
-  border: 1px solid rgba(0,0,0,.08);
-}
-.preview img{
-  width:100%;
-  height: 220px;
-  object-fit: cover;          /* ✅縮小じゃなくトリミング */
-  object-position: center;    /* ✅上下だけカット */
-  display:block;
-}
-
-.termsBox{
-  border-radius: 18px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: rgba(255,255,255,.7);
-  padding: 12px 12px 6px;
-}
-.termsBox ul{
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   margin: 0;
-  padding-left: 18px;
-  line-height:1.7;
-  color:#111827;
+  background: #fafafa;
 }
-.checkRow{
-  margin-top: 12px;
-  display:flex;
-  align-items:center;
-  gap:10px;
+
+.header {
+  display: flex;
+  justify-content: space-between;
   padding: 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: rgba(255,255,255,.75);
-}
-.checkRow input{ width:22px;height:22px; }
-
-.nav{
-  display:flex;
-  gap: 12px;
-  margin-top: 14px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
 }
 
-/* ✅ボタンは必ず反応させる */
-.btn{
-  flex:1;
-  border: none;
-  border-radius: 999px;
-  padding: 16px 14px;
-  font-size: 16px;
-  font-weight: 900;
-  cursor:pointer;
-
-  position: relative;
-  z-index: 5;              /* ✅被り防止 */
-  pointer-events: auto;    /* ✅被り防止 */
-  touch-action: manipulation;
-  user-select:none;
+.logo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.btn:disabled{
-  opacity:.55;
-  cursor:not-allowed;
+.step {
+  display: none;
+  padding: 16px;
 }
 
-.btnGhost{
-  background: rgba(255,255,255,.75);
-  border: 1px solid rgba(0,0,0,.10);
+.step.active {
+  display: block;
 }
 
-.btnPrimary{
-  color:#fff;
-  background: linear-gradient(90deg, #ff7a00, #ff2d55, #7c3aed);
+label {
+  display: block;
+  margin-bottom: 12px;
 }
 
-.btnGreen{
-  color:#fff;
-  background: linear-gradient(90deg, #22c55e, #06b6d4, #7c3aed);
+input, select {
+  width: 100%;
+  padding: 8px;
 }
 
-.btnWhite{
-  background: rgba(255,255,255,.85);
-  border: 1px solid rgba(0,0,0,.10);
-  color:#2563eb;
+button {
+  padding: 12px;
+  width: 100%;
+  margin-top: 8px;
 }
 
-.footer{
-  margin-top: 14px;
-  display:flex;
-  justify-content:space-between;
-  color: rgba(0,0,0,.38);
-  font-weight:800;
-  letter-spacing:.02em;
-  padding: 0 4px;
-}
-
-/* Toast */
-.toast{
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 18px;
-  max-width: min(720px, calc(100% - 24px));
-  padding: 12px 14px;
-  border-radius: 16px;
+.line {
+  display: block;
+  padding: 14px;
+  background: #06c755;
   color: #fff;
-  background: rgba(17,24,39,.92);
-  box-shadow: var(--shadow);
-  opacity: 0;
-  pointer-events:none;
-  transition: opacity .2s ease;
-  z-index: 9999;
+  text-align: center;
+  text-decoration: none;
 }
-.toast.show{ opacity: 1; }
