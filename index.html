@@ -5,76 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
   <title>OFA GROUP Driver Registration App</title>
+  <link rel="stylesheet" href="style.css" />
 
-  <link rel="stylesheet" href="./style.css?v=20260201_1" />
-
-  <!-- jsPDF + AutoTable (CDN) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-
 <body>
   <div class="bg"></div>
 
-  <header class="topBar">
-    <div class="brand">
-      <div class="logoWrap" aria-label="OFA LOGO">
-        <!-- ロゴが「?」になる対策：相対→失敗したら絶対URLへ自動切替 -->
-        <img
-          id="ofaLogo"
-          class="logoImg"
-          src="./assets/ofa-logo-192.png"
-          alt="OFA"
-          onerror="this.onerror=null; this.src='https://ofagroup2020-gif.github.io/ofa-driver-entry/assets/ofa-logo-192.png';"
-        />
+  <div class="wrap">
+    <!-- Top Bar -->
+    <header class="topBar">
+      <div class="brand">
+        <div class="logoBox" aria-label="OFA logo">
+          <!-- OFAロゴ（無い場合でも文字が出る） -->
+          <img id="ofaLogo" alt="OFA" />
+          <div class="logoFallback">OFA</div>
+        </div>
+        <div class="brandText">
+          <div class="brandTitle">OFA GROUP</div>
+          <div class="brandSub">Driver Registration App</div>
+        </div>
       </div>
-      <div class="brandText">
-        <div class="brandTitle">OFA GROUP</div>
-        <div class="brandSub">Driver Registration App</div>
+
+      <div class="stepPill">
+        <span class="dot"></span>
+        <span id="stepText">STEP 1 / 8</span>
       </div>
+    </header>
+
+    <!-- Progress -->
+    <div class="progressWrap">
+      <div class="progressBar">
+        <div class="progressFill" id="progressFill"></div>
+      </div>
+      <div class="progressDots" id="progressDots"></div>
     </div>
 
-    <div class="stepPill">
-      <span class="dot"></span>
-      <span id="stepLabel">STEP 1 / 8</span>
-    </div>
-  </header>
+    <!-- Card -->
+    <main class="card">
+      <!-- Step Label -->
+      <div class="chipRow">
+        <div class="chip" id="chipLabel">PROFILE</div>
+      </div>
 
-  <section class="progressWrap">
-    <div class="progressBar">
-      <div id="progressFill" class="progressFill"></div>
-    </div>
-    <div class="progressDots" id="progressDots" aria-hidden="true"></div>
-  </section>
+      <!-- Step Title -->
+      <h1 id="stepTitle">ドライバー基本情報</h1>
+      <p class="desc" id="stepDesc">本登録はドライバーご本人が行ってください。</p>
 
-  <main class="card">
-    <div class="chipRow">
-      <div id="chip" class="chip">PROFILE</div>
-    </div>
+      <!-- Step Content -->
+      <section id="stepBody"></section>
 
-    <h1 id="title" class="title">ドライバー基本情報</h1>
-    <p id="desc" class="desc">本登録はドライバーご本人が行ってください。</p>
+      <!-- Footer Buttons -->
+      <div class="footerBtns" id="footerBtns">
+        <button class="btn btnGhost" id="btnBack" type="button">戻る</button>
+        <button class="btn btnPrimary" id="btnNext" type="button">次へ</button>
+      </div>
+    </main>
 
-    <!-- Step container -->
-    <div id="stepContainer" class="stepContainer"></div>
+    <footer class="footer">
+      <div>© OFA GROUP</div>
+      <div>One for All, All for One</div>
+    </footer>
+  </div>
 
-    <!-- Footer Buttons -->
-    <div class="footerBtns">
-      <button id="btnBack" class="btn btnGhost" type="button">戻る</button>
-      <button id="btnNext" class="btn btnPrimary" type="button">次へ</button>
-    </div>
-
-    <div id="hint" class="hint"></div>
-  </main>
-
-  <footer class="footerText">
-    <div>© OFA GROUP</div>
-    <div class="motto">One for All, All for One</div>
-  </footer>
-
-  <!-- Toast -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <script defer src="./app.js?v=20260201_1"></script>
+  <script src="app.js"></script>
 </body>
 </html>
